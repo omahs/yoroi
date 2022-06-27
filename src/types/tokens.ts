@@ -68,11 +68,13 @@ export type DefaultAsset = Token & {
 
 export type TokenInfo = {
   name: string
-  decimals?: number
+  decimals: number
   assetName: string
   policyId: string
-  longName?: string
-  ticker?: string
+  longName?: string | null | undefined
+  ticker?: string | null | undefined
+  logo?: string | null | undefined
+  url?: string | null | undefined
 }
 
 // https://github.com/cardano-foundation/cardano-token-registry#semantic-content-of-registry-entries
