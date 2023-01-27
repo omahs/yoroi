@@ -16,8 +16,9 @@ import {formatTokenAmount} from '../../legacy/format'
 import {TxHistoryRouteNavigation} from '../../navigation'
 import {useSelectedWallet} from '../../SelectedWallet'
 import {COLORS} from '../../theme'
-import {alpha, toEnd, toStart} from '../../TxHistory/AssetList/utils'
-import {toToken, YoroiWallet} from '../../yoroi-wallets'
+import {sortTokenInfos} from '../../utils'
+import {YoroiWallet} from '../../yoroi-wallets'
+import {toToken} from '../../yoroi-wallets/cardano/api/utils'
 import {TokenInfo} from '../../yoroi-wallets/types'
 import {Amounts} from '../../yoroi-wallets/utils'
 import {useSend} from '../Context/SendContext'
@@ -33,11 +34,6 @@ export const AssetSelectorScreen = () => {
     wallet,
     tokenIds: Amounts.toArray(balances).map(({tokenId}) => tokenId),
   })
-  const sortedTokenInfos = tokenInfos
-    .sort(alpha((tokenInfo) => tokenInfo.name?.toLocaleLowerCase() ?? ''))
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    .sort(toEnd((tokenInfo) => !tokenInfo.name))
-    .sort(toStart((tokenInfo) => tokenInfo.id === wallet.primaryTokenInfo.id))
 
   const onChangeMatcher = (matcher: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
@@ -47,7 +43,7 @@ export const AssetSelectorScreen = () => {
   return (
     <SafeAreaView edges={['left', 'right', 'bottom']} style={{flex: 1, backgroundColor: 'white'}}>
       <View style={{paddingTop: 16, paddingHorizontal: 16}}>
-        <SearchInput onChangeText={(text) => onChangeMatcher(normalize(text))} />
+        <SearchInput onChangeText={(text) => onChangeMatcher(text)} />
 
         <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
           <Text style={{color: COLORS.GREY_6}}>{strings.assetsLabel}</Text>
@@ -60,7 +56,7 @@ export const AssetSelectorScreen = () => {
       </View>
 
       <FlatList
-        data={sortedTokenInfos}
+        data={sortTokenInfos({wallet, tokenInfos})}
         renderItem={({item: tokenInfo}: {item: TokenInfo}) => (
           <Boundary>
             <AssetSelectorItem
@@ -118,8 +114,7 @@ const AssetSelectorItem = ({wallet, tokenInfo, onSelect, matcher}: AssetSelector
 
         <View style={{flex: 1, padding: 4}}>
           <Text numberOfLines={1} ellipsizeMode="middle" style={{color: COLORS.BLUE_LIGHTER}} testID="tokenInfoText">
-            {/* eslint-disable-next-line @typescript-eslint/strict-boolean-expressions */}
-            {tokenInfo.ticker || tokenInfo.name || '-'}
+            {tokenInfo.ticker ?? tokenInfo.name ?? '-'}
           </Text>
 
           <Text
@@ -143,6 +138,7 @@ const AssetSelectorItem = ({wallet, tokenInfo, onSelect, matcher}: AssetSelector
 }
 
 const HR = (props) => <View {...props} style={{height: 1, backgroundColor: COLORS.GRAY}} />
+
 const Icon = (props) => (
   <Avatar.Image
     {...props}
@@ -152,8 +148,6 @@ const Icon = (props) => (
 )
 const Actions = (props) => <View {...props} style={{padding: 16}} />
 
-const normalize = (text: string) => text.trim().toLowerCase()
-
 const SearchInput = (props) => {
   const strings = useStrings()
 
@@ -161,7 +155,11 @@ const SearchInput = (props) => {
 }
 
 const matches = (tokenInfo: TokenInfo, matcher: string) =>
-  Object.values(tokenInfo).some((key) => normalize(String(key)).includes(normalize(matcher)))
+  Object.values(tokenInfo)
+    .filter((value): value is string | number => value != null)
+    .some((value) => normalize(value).includes(normalize(matcher)))
+
+const normalize = (text: string | number) => String(text).trim().toLocaleLowerCase()
 
 const useStrings = () => {
   const intl = useIntl()

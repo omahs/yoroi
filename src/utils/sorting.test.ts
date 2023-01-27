@@ -1,4 +1,4 @@
-import {alpha, toEnd, toStart} from './utils'
+import {alpha, toEnd, toStart} from './sorting'
 
 describe('sorting', () => {
   it('sorts alphabetically', () => {
