@@ -30,7 +30,7 @@ describe('Quantities', () => {
     expect(Quantities.isGreaterThan('2', '2')).toBe(false)
     expect(Quantities.isGreaterThan('2', '1')).toBe(true)
   })
-  it('toPrecision', () => {
+  it('decimalPlaces', () => {
     expect(Quantities.decimalPlaces('1', 2)).toBe('1')
     expect(Quantities.decimalPlaces('1.00000', 2)).toBe('1')
     expect(Quantities.decimalPlaces('1.123456', 2)).toBe('1.12')
@@ -41,6 +41,25 @@ describe('Quantities', () => {
     expect(Quantities.denominated('1000', 2)).toBe('10')
     expect(Quantities.denominated('112345', 3)).toBe('112.345')
     expect(Quantities.denominated('1123456', 10)).toBe('0.0001123456')
+  })
+  it('atomic', () => {
+    expect(Quantities.atomic('', 15)).toBe('0000000000000000')
+    expect(Quantities.atomic('', 0)).toBe('0')
+    expect(Quantities.atomic(-1, 3)).toBe('-1000')
+    expect(Quantities.atomic(2.5, 2)).toBe('250')
+    expect(Quantities.atomic('1', 2)).toBe('100')
+    expect(Quantities.atomic('1000', 2)).toBe('100000')
+    expect(Quantities.atomic('123.456', 3)).toBe('123456')
+    expect(Quantities.atomic('1.08', 10)).toBe('10800000000')
+    expect(Quantities.atomic('1.0800001', 3)).toBe('1080')
+  })
+  it('isZero', () => {
+    expect(Quantities.isZero(Quantities.atomic('', 15))).toBeTruthy()
+    expect(Quantities.isZero(Quantities.atomic('', 0))).toBeTruthy()
+    expect(Quantities.isZero(Quantities.atomic('0', 2))).toBeTruthy()
+    expect(Quantities.isZero(Quantities.atomic('-1', 2))).toBeFalsy()
+    expect(Quantities.isZero(Quantities.atomic('1', 2))).toBeFalsy()
+    expect(Quantities.isZero(Quantities.atomic('0.00000000000001', 18))).toBeFalsy()
   })
 })
 
@@ -137,6 +156,32 @@ describe('Amounts', () => {
       {tokenId: 'token123', quantity: '456'},
       {tokenId: 'token567', quantity: '-789'},
     ] as Array<YoroiAmount>)
+  })
+
+  it('save (replaces or adds an YoroiAmount into YoroiAmounts)', () => {
+    const amounts: YoroiAmounts = {
+      updateToken: '456',
+    }
+    const updateAmount: YoroiAmount = {
+      tokenId: 'updateToken',
+      quantity: '321',
+    }
+    const addAmount: YoroiAmount = {
+      tokenId: 'addToken',
+      quantity: '789',
+    }
+
+    expect(Amounts.save(amounts, updateAmount)).toMatchInlineSnapshot(`
+      Object {
+        "updateToken": "321",
+      }
+    `)
+    expect(Amounts.save(amounts, addAmount)).toMatchInlineSnapshot(`
+      Object {
+        "addToken": "789",
+        "updateToken": "456",
+      }
+    `)
   })
 })
 

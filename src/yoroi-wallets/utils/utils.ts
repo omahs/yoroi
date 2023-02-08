@@ -62,6 +62,14 @@ export const Amounts = {
       quantity: amounts[tokenId] || '0',
     }
   },
+  save: (amounts: YoroiAmounts, amount: YoroiAmount): YoroiAmounts => {
+    const {tokenId, quantity} = amount
+
+    return {
+      ...amounts,
+      [tokenId]: quantity,
+    }
+  },
   toArray: (amounts: YoroiAmounts) =>
     Object.keys(amounts).reduce(
       (result, current) => [...result, Amounts.getAmount(amounts, current)],
@@ -98,6 +106,12 @@ export const Quantities = {
   denominated: (quantity: Quantity, denomination: number) => {
     return Quantities.quotient(quantity, `${10 ** denomination}`)
   },
+  atomic: (data: Quantity | BigNumber | string | number, denomination: number) => {
+    const stripped = data.toString().replace(/[^0-9.-]/g, '')
+    const value = (stripped.length > 0 && new BigNumber(stripped).isZero() !== true ? stripped : '0') as Quantity
+    return new BigNumber(value).toFixed(denomination).toString().replace('.', '') as Quantity
+  },
+  isZero: (quantity: Quantity) => new BigNumber(quantity).isZero(),
 }
 
 export const asQuantity = (amount: BigNumber | number | string) => new BigNumber(amount).toString() as Quantity

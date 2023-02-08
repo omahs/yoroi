@@ -33,6 +33,9 @@ function loadStories() {
 	require('../src/Send/AddressReaderQR/AddressReaderQR.stories');
 	require('../src/Send/AssetSelectorScreen/AssetSelectorScreen.stories');
 	require('../src/Send/ConfirmScreen/ConfirmScreen.stories');
+	require('../src/Send/SelectedTokensScreen/DeleteToken.stories');
+	require('../src/Send/SelectedTokensScreen/EditTokenAmount.stories');
+	require('../src/Send/SelectedTokensScreen/SelectedTokensScreen.stories');
 	require('../src/Send/SendScreen/SendScreen.stories');
 	require('../src/Settings/ApplicationSettings/ApplicationSettingsScreen.stories');
 	require('../src/Settings/ChangeLanguage/ChangeLanguageScreen.stories');
@@ -142,6 +145,9 @@ const stories = [
 	'../src/Send/AddressReaderQR/AddressReaderQR.stories',
 	'../src/Send/AssetSelectorScreen/AssetSelectorScreen.stories',
 	'../src/Send/ConfirmScreen/ConfirmScreen.stories',
+	'../src/Send/SelectedTokensScreen/DeleteToken.stories',
+	'../src/Send/SelectedTokensScreen/EditTokenAmount.stories',
+	'../src/Send/SelectedTokensScreen/SelectedTokensScreen.stories',
 	'../src/Send/SendScreen/SendScreen.stories',
 	'../src/Settings/ApplicationSettings/ApplicationSettingsScreen.stories',
 	'../src/Settings/ChangeLanguage/ChangeLanguageScreen.stories',
