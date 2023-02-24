@@ -12,6 +12,7 @@ import {useModeratedNftImage} from '../Nfts/hooks'
 import {useNavigateTo} from '../Nfts/navigation'
 import {useSelectedWallet} from '../SelectedWallet'
 import {COLORS} from '../theme'
+import {isArray, isString} from '../yoroi-wallets'
 import {YoroiNft} from '../yoroi-wallets/types'
 import placeholder from './../assets/img/nft-placeholder.png'
 
@@ -100,28 +101,32 @@ const MetadataRow = ({title, copyText, children}: {title: string; children: Reac
 
 const NftMetadataPanel = ({nft}: {nft: YoroiNft}) => {
   const strings = useStrings()
+  const metadataKeys = Object.keys(nft.metadata.originalMetadata)
+  const metadataKeysToDisplay = metadataKeys.filter((key) => key !== 'name' && key !== 'description')
 
   return (
     <>
-      <MetadataRow title={strings.nftName}>
-        <Text secondary>{nft.name}</Text>
-      </MetadataRow>
+      <MetadataValue value={nft.name} label={strings.nftName} allowCopy={false} />
 
-      <MetadataRow title={strings.description}>
-        <Text secondary>{nft.description}</Text>
-      </MetadataRow>
+      <MetadataValue value={nft.description} label={strings.description} allowCopy={false} />
 
-      <MetadataRow title={strings.author}>
-        <Text secondary>{nft.metadata.originalMetadata.author ?? '-'}</Text>
-      </MetadataRow>
+      <MetadataValue label={strings.fingerprint} value={nft.fingerprint} allowCopy={true} />
 
-      <MetadataRow title={strings.fingerprint} copyText={nft.fingerprint}>
-        <Text secondary>{nft.fingerprint}</Text>
-      </MetadataRow>
+      <MetadataValue label={strings.policyId} value={nft.metadata.policyId} allowCopy={true} />
 
-      <MetadataRow title={strings.policyId} copyText={nft.metadata.policyId}>
-        <Text secondary>{nft.metadata.policyId}</Text>
-      </MetadataRow>
+      {metadataKeysToDisplay.map((key) => {
+        const value = nft.metadata.originalMetadata[key]
+        if (
+          typeof value === 'string' ||
+          typeof value === 'number' ||
+          typeof value === 'boolean' ||
+          (isArray(value) && value.every(isString))
+        ) {
+          return <MetadataValue key={key} label={key} value={value} allowCopy={true} />
+        }
+
+        return null
+      })}
 
       <MetadataRow title={strings.detailsLinks}>
         <Link url={`https://cardanoscan.io/token/${nft.fingerprint}`}>
@@ -145,6 +150,49 @@ const NftMetadataPanel = ({nft}: {nft: YoroiNft}) => {
         </Link>
       </MetadataRow>
     </>
+  )
+}
+
+function MetadataValue({
+  label,
+  value,
+  allowCopy,
+}: {
+  label: string
+  value: string | number | boolean | string[]
+  allowCopy: boolean
+}) {
+  if (typeof value === 'boolean') {
+    const stringifiedValue = value ? 'Yes' : 'No'
+    return (
+      <MetadataRow title={label} copyText={allowCopy ? stringifiedValue : undefined}>
+        <Text secondary>{stringifiedValue}</Text>
+      </MetadataRow>
+    )
+  }
+
+  if (typeof value === 'number') {
+    const stringifiedValue = value.toString()
+    return (
+      <MetadataRow title={label} copyText={allowCopy ? stringifiedValue : undefined}>
+        <Text secondary>{stringifiedValue}</Text>
+      </MetadataRow>
+    )
+  }
+
+  if (isArray(value) && value.every(isString)) {
+    const stringifiedValue = value.join(', ')
+    return (
+      <MetadataRow title={label} copyText={allowCopy ? stringifiedValue : undefined}>
+        <Text secondary>{stringifiedValue}</Text>
+      </MetadataRow>
+    )
+  }
+
+  return (
+    <MetadataRow title={label} copyText={allowCopy ? value : undefined}>
+      <Text secondary>{value}</Text>
+    </MetadataRow>
   )
 }
 
