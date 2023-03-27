@@ -67,6 +67,10 @@ export const Amounts = {
       (result, current) => [...result, Amounts.getAmount(amounts, current)],
       [] as Array<YoroiAmount>,
     ),
+  fromArray: (amounts: Array<YoroiAmount>) =>
+    amounts.reduce((result, current) => ({...result, [current.tokenId]: current.quantity}), {} as YoroiAmounts),
+  filter: (amounts: YoroiAmounts, filter: (YoroiAmount) => boolean): YoroiAmounts =>
+    Amounts.fromArray(Amounts.toArray(amounts).filter(filter)),
 }
 
 export const Quantities = {
@@ -103,29 +107,25 @@ export const Quantities = {
 export const asQuantity = (amount: BigNumber | number | string) => new BigNumber(amount).toString() as Quantity
 
 export const Utxos = {
-  toAmounts: (utxos: RawUtxo[], primaryTokenId: TokenId) => {
-    return utxos.reduce(
-      (previousAmounts, currentUtxo) => {
-        const amounts = {
-          ...previousAmounts,
-          [primaryTokenId]: Quantities.sum([previousAmounts[primaryTokenId], currentUtxo.amount as Quantity]),
-        }
+  toAmounts: (utxos: RawUtxo[]) => {
+    return utxos.reduce((previousAmounts, currentUtxo) => {
+      const amounts = {
+        ...previousAmounts,
+      }
 
-        if (currentUtxo.assets) {
-          return currentUtxo.assets.reduce((previousAmountsWithAssets, currentAsset) => {
-            return {
-              ...previousAmountsWithAssets,
-              [currentAsset.assetId]: Quantities.sum([
-                previousAmountsWithAssets[currentAsset.assetId] ?? ('0' as Quantity),
-                currentAsset.amount as Quantity,
-              ]),
-            }
-          }, amounts)
-        }
+      if (currentUtxo.assets) {
+        return currentUtxo.assets.reduce((previousAmountsWithAssets, currentAsset) => {
+          return {
+            ...previousAmountsWithAssets,
+            [currentAsset.assetId]: Quantities.sum([
+              previousAmountsWithAssets[currentAsset.assetId] ?? ('0' as Quantity),
+              currentAsset.amount as Quantity,
+            ]),
+          }
+        }, amounts)
+      }
 
-        return amounts
-      },
-      {[primaryTokenId]: '0'} as YoroiAmounts,
-    )
+      return amounts
+    }, {} as YoroiAmounts)
   },
 }

@@ -136,6 +136,20 @@ export const getTokenInfo = async (tokenId: string, apiUrl: string) => {
   return entry ? tokenInfo(entry) : fallbackTokenInfo(tokenId)
 }
 
+export const getRegistryEntry = async (tokenId: string, apiUrl: string) => {
+  const response = await checkedFetch({
+    endpoint: `${apiUrl}/${toTokenSubject(tokenId)}`,
+    method: 'GET',
+    payload: undefined,
+  }).catch((error) => {
+    Logger.error(error)
+
+    return undefined
+  })
+
+  return parseTokenRegistryEntry(response)
+}
+
 export const getFundInfo = (config: BackendConfig, isMainnet: boolean): Promise<FundInfoResponse> => {
   const prefix = isMainnet ? '' : 'api/'
   return fetchDefault(`${prefix}v0/catalyst/fundInfo/`, null, config, 'GET') as any

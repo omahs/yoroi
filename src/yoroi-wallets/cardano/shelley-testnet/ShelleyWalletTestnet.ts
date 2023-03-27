@@ -45,6 +45,7 @@ import {
   walletChecksum,
 } from '..'
 import * as api from '../api'
+import {makeAssetManager} from '../assetManager'
 import {encryptWithPassword} from '../catalyst/catalystCipher'
 import {AddressChain, AddressChainJSON, Addresses, AddressGenerator} from '../chain'
 import {HISTORY_REFRESH_TIME} from '../constants'
@@ -244,6 +245,8 @@ export class ShelleyWalletTestnet implements YoroiWallet {
     const utxoManager = await makeUtxoManager({storage: storage.join('utxoManager/'), apiUrl: API_ROOT})
     const transactionManager = await TransactionManager.create(storage.join('txs/'))
     const memosManager = await makeMemosManager(storage.join('memos/'))
+    const assetManager = makeAssetManager()
+    assetManager.update(utxoManager.initialUtxos)
 
     const wallet = new ShelleyWalletTestnet({
       storage,

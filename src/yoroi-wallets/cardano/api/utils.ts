@@ -54,7 +54,7 @@ export const toPolicyId = (tokenIdentifier: string) => {
 }
 export const toAssetName = (tokenIdentifier: string) => {
   const tokenSubject = toTokenSubject(tokenIdentifier)
-  const assetName = hexToAscii(tokenSubject.slice(56)) || undefined
+  const assetName = hexToAscii(tokenSubject.slice(56))
   return assetName
 }
 
