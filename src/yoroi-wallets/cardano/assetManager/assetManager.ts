@@ -1,15 +1,19 @@
-import {NftMetadata, RawUtxo, YoroiAmounts} from '../../types'
-import {Amounts, Utxos} from '../../utils'
-import {asciiToHex, getRegistryEntry, toAssetName, TokenRegistryEntry, toPolicyId} from '../api'
+import {getAssetFingerprint} from '../../../legacy/format'
+import {RawUtxo, TokenInfo, YoroiAmounts, YoroiNft} from '../../types'
+import {Amounts, hasProperties, isArray, isObject, Utxos} from '../../utils'
+import {hexToAscii, toAssetName, toPolicyId} from '../api'
 import fetchDefault from '../api/fetch'
-import {API_ROOT, BACKEND} from '../shelley-testnet/constants'
+import {BACKEND} from '../shelley-testnet/constants'
+import {getOffChainMetadatas} from './offChainMetadatas'
+// import {getOffChainMetadatas, OffChainMetadatas} from './offChainMetadatas'
+import {getOnChainMetadatas} from './onChainMetadatas'
 
 export type AssetManager = Awaited<ReturnType<typeof makeAssetManager>>
 
 type AssetManagerState = {
-  tokenInfos: {
-    fts: Record<string, any>
-    nfts: Record<string, any>
+  assetInfos: {
+    fts: Record<string, TokenInfo>
+    nfts: Record<string, YoroiNft>
   }
   balances: {
     all: YoroiAmounts
@@ -20,7 +24,7 @@ type AssetManagerState = {
 
 export const makeAssetManager = () => {
   const state: AssetManagerState = {
-    tokenInfos: {
+    assetInfos: {
       fts: {},
       nfts: {},
     },
@@ -38,55 +42,77 @@ export const makeAssetManager = () => {
     update: async (utxos: Array<RawUtxo>) => {
       state.balances.all = Utxos.toAmounts(utxos)
 
-      const tokenIds = Amounts.toArray(state.balances.all).map(({tokenId}) => tokenId)
-      const request = {
-        assets: tokenIds.map((tokenId) => ({
-          nameHex: asciiToHex(toAssetName(tokenId)),
-          policy: toPolicyId(tokenId),
-        })),
-      }
-      const records: MetadataEndpointReponse = await fetchDefault('multiAsset/metadata', request, BACKEND)
-      const entries = Object.entries(records).map(([key, [entry]]) => [key, entry] as const)
-      const ftEntries = Object.fromEntries(
-        entries
-          .filter((tuple): tuple is readonly [string, NftMetadataRecord] => isFt(tuple[1]))
-          .map(([key, record]) => {
-            const [policyId, assetName] = key.split('.')
-            const assetNameHex = asciiToHex(assetName)
-            const assetId = `${policyId}.${assetNameHex}`
-            const metadata = record.metadata[policyId][assetNameHex]
+      const assetIds = Amounts.toArray(state.balances.all).map(({tokenId}) => tokenId)
+      const [offChainMetadatas, onChainMetadatas, assetSupplies] = await Promise.all([
+        getOffChainMetadatas(assetIds),
+        getOnChainMetadatas(assetIds),
+        getAssetSupplies(assetIds),
+      ])
 
-            return [assetId, metadata] as const
-          }),
-      )
+      console.log('QWE', offChainMetadatas)
 
-      const nftEntries = Object.fromEntries(
-        entries
-          .filter((tuple): tuple is readonly [string, NftMetadataRecord] => isNft(tuple[1]))
-          .map(([key, record]) => {
-            const [policyId, assetName] = key.split('.')
-            const assetNameHex = asciiToHex(assetName)
-            const assetId = `${policyId}.${assetNameHex}`
-            const metadata = record.metadata[policyId][assetNameHex]
+      state.assetInfos.fts = assetIds.reduce((result, id) => {
+        const onChainMetadata = onChainMetadatas[id]
+        const offChainMetadata = offChainMetadatas[id]
+        const assetSupply = assetSupplies[id]
 
-            return [assetId, metadata] as const
-          }),
-      )
+        const isNFT = onChainMetadata?.key === '721' && assetSupply === 1
+        if (isNFT) return result
 
-      const onChainMetadata = {
-        ft: ftEntries,
-        nft: nftEntries,
-      }
+        const [policyId, assetNameHex] = id.split('.')
 
-      const offChainMetadatas = await Promise.all(tokenIds.map((tokenId) => getRegistryEntry(tokenId, API_ROOT))).then(
-        (entries) => entries.filter((entry): entry is TokenRegistryEntry => !!entry),
-      )
+        const decimals = onChainMetadata?.decimals ?? offChainMetadata.decimals ?? 0
 
-      state.tokenInfos.fts = ftEntries
-      state.tokenInfos.nfts = nftEntries
+        const name1 = onChainMetadata?.name ?? offChainMetadata.name ?? ''
+        const name = hexToAscii(name1)
 
-      state.balances.fts = Amounts.filter(state.balances.all, ({tokenId}) => !!state.tokenInfos.fts[tokenId])
-      state.balances.nfts = Amounts.filter(state.balances.all, ({tokenId}) => !!state.tokenInfos.nfts[tokenId])
+        const description1 = onChainMetadata?.description ?? offChainMetadata.description ?? ''
+        const description = isArray(description1) ? description1.join(' ') : description1
+
+        const ticker = onChainMetadata?.ticker ?? offChainMetadata.ticker ?? ''
+
+        const tokenInfo: TokenInfo = {
+          id,
+          group: policyId,
+          decimals,
+          name,
+          description,
+          ticker,
+          fingerprint: getAssetFingerprint(policyId, assetNameHex),
+          symbol: metadata.ticker,
+          url: metadata.url,
+          logo: isArray(metadata.icon) ? metadata.icon.join('') : metadata.icon,
+        }
+
+        return {...result, [id]: tokenInfo}
+      }, {})
+
+      state.assetInfos.nfts = Object.entries(onChainMetadatas.nfts).reduce((result, [id, metadata]) => {
+        const [policyId, assetNameHex] = id.split('.')
+        const description = isArray(metadata.description) ? metadata.description.join(' ') : metadata.description ?? ''
+        const originalImage = isArray(metadata.image) ? metadata.image.join('') : metadata.image
+        const isIpfsImage = originalImage.startsWith('ipfs://')
+        const convertedImage = isIpfsImage ? originalImage.replace('ipfs://', `https://ipfs.io/ipfs/`) : originalImage
+
+        const nftInfo: YoroiNft = {
+          id,
+          fingerprint: getAssetFingerprint(policyId, assetNameHex),
+          name: metadata.name,
+          description,
+          thumbnail: convertedImage,
+          image: convertedImage,
+          metadata: {
+            policyId,
+            assetNameHex,
+            originalMetadata: metadata,
+          },
+        }
+
+        return {...result, [id]: nftInfo}
+      }, {})
+
+      state.balances.fts = Amounts.filter(state.balances.all, ({tokenId}) => !!state.assetInfos.fts[tokenId])
+      state.balances.nfts = Amounts.filter(state.balances.all, ({tokenId}) => !!state.assetInfos.nfts[tokenId])
 
       console.log('QWE', state)
 
@@ -94,15 +120,6 @@ export const makeAssetManager = () => {
     },
     subscribe,
   } as const
-}
-
-const format = ([key, record]: [string, AssetMetadataRecord]) => {
-  const [policyId, assetName] = key.split('.')
-  const assetNameHex = asciiToHex(assetName)
-  const assetId = `${policyId}.${assetNameHex}`
-  const metadata = record.metadata[policyId][assetNameHex]
-
-  return [assetId, metadata] as const
 }
 
 const observable = () => {
@@ -118,38 +135,20 @@ const observable = () => {
   } as const
 }
 
-const isNft = (entry: AssetMetadataRecord): entry is FtMetadataRecord => entry.key === '721'
-const isFt = (entry: AssetMetadataRecord): entry is NftMetadataRecord => entry.key !== '721'
-
-export type MetadataEndpointReponse = {
-  [policyIdAssetName: string]: [AssetMetadataRecord]
-}
-
-type AssetMetadataRecord = FtMetadataRecord | NftMetadataRecord
-
-type NftMetadataRecord = {
-  key: '721'
-  metadata: {
-    [policyId: string]: {
-      [assetNameHex: string]: NftMetadata
-    }
+export const getAssetSupplies = async (assetIds: Array<string>) => {
+  const suppliesRequest = {
+    assets: assetIds.map((tokenId) => ({
+      name: toAssetName(tokenId),
+      policy: toPolicyId(tokenId),
+    })),
   }
-}
 
-type FtMetadataRecord = {
-  key: '20'
-  metadata: {
-    [policyId: string]: {
-      [assetNameHex: string]: FtMetadata
-    }
-  }
-}
+  const totalSupplies: unknown = await fetchDefault('multiAsset/supply', suppliesRequest, BACKEND)
+  if (!isObject(totalSupplies)) throw new Error('Invalid asset supplies')
+  if (!hasProperties(totalSupplies, ['supplies'])) throw new Error('Invalid asset supplies')
+  if (!isObject(totalSupplies.supplies)) throw new Error('Invalid asset supplies')
+  if (!Object.values(totalSupplies.supplies).every((supply) => typeof supply === 'number' || supply === null))
+    throw new Error('Invalid asset supplies')
 
-type FtMetadata = {
-  desc: string | Array<string>
-  icon: string | Array<string>
-  decimals: number
-  ticker: string
-  url: string
-  version: string
+  return totalSupplies.supplies as {[assetId: string]: number | null}
 }

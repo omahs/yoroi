@@ -2,7 +2,6 @@
 import assert from 'assert'
 import _ from 'lodash'
 
-import {Logger} from '../../logging'
 import type {
   AccountStateRequest,
   AccountStateResponse,
@@ -23,8 +22,7 @@ import {hasProperties, isArray, isNonNullable, isObject, isRecord} from '../../u
 import {ServerStatus} from '..'
 import {ApiError} from '../errors'
 import {convertNft} from '../nfts'
-import fetchDefault, {checkedFetch} from './fetch'
-import {fallbackTokenInfo, tokenInfo, toTokenSubject} from './utils'
+import fetchDefault from './fetch'
 
 type Addresses = Array<string>
 
@@ -120,36 +118,6 @@ export const getNFTModerationStatus = async (
   )
 }
 
-export const getTokenInfo = async (tokenId: string, apiUrl: string) => {
-  const response = await checkedFetch({
-    endpoint: `${apiUrl}/${toTokenSubject(tokenId)}`,
-    method: 'GET',
-    payload: undefined,
-  }).catch((error) => {
-    Logger.error(error)
-
-    return undefined
-  })
-
-  const entry = parseTokenRegistryEntry(response)
-
-  return entry ? tokenInfo(entry) : fallbackTokenInfo(tokenId)
-}
-
-export const getRegistryEntry = async (tokenId: string, apiUrl: string) => {
-  const response = await checkedFetch({
-    endpoint: `${apiUrl}/${toTokenSubject(tokenId)}`,
-    method: 'GET',
-    payload: undefined,
-  }).catch((error) => {
-    Logger.error(error)
-
-    return undefined
-  })
-
-  return parseTokenRegistryEntry(response)
-}
-
 export const getFundInfo = (config: BackendConfig, isMainnet: boolean): Promise<FundInfoResponse> => {
   const prefix = isMainnet ? '' : 'api/'
   return fetchDefault(`${prefix}v0/catalyst/fundInfo/`, null, config, 'GET') as any
@@ -190,26 +158,6 @@ type Property<T> = {
   signatures: Array<Signature>
   sequenceNumber: number
   value: T | undefined
-}
-
-const parseTokenRegistryEntry = (data: unknown) => {
-  return isTokenRegistryEntry(data) ? data : undefined
-}
-
-const isTokenRegistryEntry = (data: unknown): data is TokenRegistryEntry => {
-  const candidate = data as TokenRegistryEntry
-
-  return (
-    !!candidate &&
-    typeof candidate === 'object' &&
-    'subject' in candidate &&
-    typeof candidate.subject === 'string' &&
-    'name' in candidate &&
-    !!candidate.name &&
-    typeof candidate.name === 'object' &&
-    'value' in candidate.name &&
-    typeof candidate.name.value === 'string'
-  )
 }
 
 export const parseModerationStatus = (status: unknown): YoroiNftModerationStatus | undefined => {
