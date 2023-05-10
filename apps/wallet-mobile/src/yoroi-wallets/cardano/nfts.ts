@@ -1,25 +1,27 @@
 import {features} from '../../features'
 import {getAssetFingerprint} from '../../legacy/format'
-import {YoroiNft} from '../types'
-import {hasProperties, isArray, isArrayOfType, isRecord, isString} from '../utils'
-import {utf8ToHex} from './api/utils'
+import {NFTAsset, YoroiNft} from '../types'
+import {hasProperties, isArray, isArrayOfType, isNumber, isObject, isRecord, isString} from '../utils'
+import {toAssetName, toPolicyId, toUtf8DecodedAssetName, utf8ToHex} from './api/utils'
 
-export const convertNft = (options: {
+export interface ConvertNftParams {
+  id: string
   metadata?: unknown
   storageUrl: string
-  policyId: string
-  shortName: string
-}): YoroiNft => {
-  const {metadata, storageUrl, policyId, shortName} = options
-  const assetNameHex = utf8ToHex(shortName)
+  version: number
+}
+
+export const convertNft = ({id, metadata, storageUrl, version}: ConvertNftParams): YoroiNft => {
+  const policyId = toPolicyId(id)
+  const assetNameReadable = version === 1 ? toAssetName(id) : toUtf8DecodedAssetName(id)
+  const assetNameHex = utf8ToHex(assetNameReadable)
   const fingerprint = getAssetFingerprint(policyId, assetNameHex)
   const description = isRecord(metadata) ? normalizeProperty(metadata.description) : undefined
   const originalImage = isRecord(metadata) ? normalizeProperty(metadata.image) : undefined
   const isIpfsImage = !!originalImage?.startsWith('ipfs://')
   const convertedImage = isIpfsImage ? originalImage?.replace('ipfs://', `https://ipfs.io/ipfs/`) : originalImage
 
-  const id = `${policyId}.${assetNameHex}`
-  const name = isRecord(metadata) && isString(metadata.name) ? metadata.name : shortName
+  const name = isRecord(metadata) && isString(metadata.name) ? metadata.name : assetNameReadable
 
   return {
     id,
@@ -58,3 +60,22 @@ export const getNftFilenameMediaType = (nft: YoroiNft, filename: string): string
   })
   return isRecord(file) && hasProperties(file, ['mediaType']) && isString(file.mediaType) ? file.mediaType : undefined
 }
+
+export const isAssetNFT = (asset: unknown): asset is NFTAsset => {
+  return isObject(asset) && hasProperties(asset, ['key']) && asset.key === NFT_METADATA_KEY
+}
+
+export const getNftAssetVersion = (asset: NFTAsset): number => {
+  const version = asset.metadata.version
+  if (isNumber(version)) {
+    return version
+  }
+
+  if (isString(version)) {
+    return parseInt(version, 10)
+  }
+
+  return 1
+}
+
+const NFT_METADATA_KEY = '721'

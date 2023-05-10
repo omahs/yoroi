@@ -4,7 +4,6 @@ import {TokenRegistryEntry} from './api'
 import {
   fallbackTokenInfo,
   hexToUtf8,
-  toAssetName,
   tokenInfo,
   toPolicyId,
   toToken,
@@ -12,28 +11,29 @@ import {
   toTokenId,
   toTokenInfo,
   toTokenSubject,
+  toUtf8DecodedAssetName,
   utf8ToHex,
 } from './utils'
 
 describe('api utils', () => {
-  it('toPolicyId, toAssetName', () => {
+  it('toPolicyId, toUtf8DecodedAssetName', () => {
     const policyId = '1'.repeat(56)
     const assetName = 'assetName'
     const assetNameHex = utf8ToHex('assetName')
 
-    const tokenIndentifier = policyId + '.' + assetNameHex
-    expect(toPolicyId(tokenIndentifier)).toEqual(policyId)
-    expect(toAssetName(tokenIndentifier)).toEqual(assetName)
+    const tokenIdentifier = policyId + '.' + assetNameHex
+    expect(toPolicyId(tokenIdentifier)).toEqual(policyId)
+    expect(toUtf8DecodedAssetName(tokenIdentifier)).toEqual(assetName)
 
     const tokenSubject = policyId + assetNameHex
     expect(toPolicyId(tokenSubject)).toEqual(policyId)
 
     const noName = policyId
     expect(toPolicyId(noName)).toEqual(policyId)
-    expect(toAssetName(noName)).toEqual(undefined)
+    expect(toUtf8DecodedAssetName(noName)).toEqual('')
 
     const longName = '1'.repeat(128)
-    expect(toAssetName(policyId + '.' + utf8ToHex(longName))).toEqual('1'.repeat(32))
+    expect(toUtf8DecodedAssetName(policyId + '.' + utf8ToHex(longName))).toEqual('1'.repeat(32))
   })
 
   describe('toTokenSubject', () => {
@@ -199,7 +199,7 @@ describe('api utils', () => {
         decimals: 0,
         fingerprint: 'asset17jfppv3h7hnsjfqq5lyp52dyhwstfv9e4uauga',
 
-        name: undefined,
+        name: '',
         description: undefined,
         logo: undefined,
         ticker: undefined,

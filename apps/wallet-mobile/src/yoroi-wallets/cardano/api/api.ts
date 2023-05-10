@@ -18,13 +18,21 @@ import type {
   TxStatusRequest,
   TxStatusResponse,
 } from '../../types'
-import {NFTAsset, YoroiNft, YoroiNftModerationStatus} from '../../types'
-import {hasProperties, isArray, isNonNullable, isNumber, isObject, isRecord} from '../../utils/parsing'
+import {YoroiNft, YoroiNftModerationStatus} from '../../types'
+import {hasProperties, isArray, isNonNullable, isNumber, isRecord} from '../../utils/parsing'
 import {ApiError} from '../errors'
-import {convertNft} from '../nfts'
+import {convertNft, getNftAssetVersion, isAssetNFT} from '../nfts'
 import {ServerStatus} from '../types'
 import fetchDefault, {checkedFetch} from './fetch'
-import {fallbackTokenInfo, toAssetName, tokenInfo, toPolicyId, toTokenSubject} from './utils'
+import {
+  fallbackTokenInfo,
+  toAssetName,
+  tokenInfo,
+  toPolicyId,
+  toTokenFingerprint,
+  toTokenSubject,
+  toUtf8DecodedAssetName,
+} from './utils'
 
 type Addresses = Array<string>
 
@@ -97,22 +105,21 @@ export const getNFTs = async (ids: string[], config: BackendConfig): Promise<Yor
     return {policy, nameHex}
   })
 
-  const payload = {assets}
-
   const [assetMetadatas, assetSupplies] = await Promise.all([
-    fetchDefault<unknown>('multiAsset/metadata', payload, config),
+    fetchDefault<unknown>('multiAsset/metadata', {assets}, config),
     fetchTokensSupplies(ids, config),
   ])
 
   const possibleNfts = parseNFTs(assetMetadatas, config.NFT_STORAGE_URL)
-  return possibleNfts.filter((nft) => assetSupplies[nft.id] === 1)
+  return possibleNfts.filter((nft) => assetSupplies[nft.fingerprint] === 1)
 }
 
+// TODO: we assume tokenIds is `${policyId}.${assetNameHex}
 export const fetchTokensSupplies = async (
   tokenIds: string[],
   config: BackendConfig,
 ): Promise<Record<string, number | null>> => {
-  const assets = tokenIds.map((tokenId) => ({policy: toPolicyId(tokenId), name: toAssetName(tokenId) || ''}))
+  const assets = tokenIds.map((tokenId) => ({policy: toPolicyId(tokenId), name: toUtf8DecodedAssetName(tokenId)}))
   const response = await fetchDefault<unknown>('multiAsset/supply', {assets}, config)
   const supplies = assets.map((asset) => {
     const key = `${asset.policy}.${asset.name}`
@@ -127,7 +134,13 @@ export const fetchTokensSupplies = async (
 
     return isNumber(supply) ? supply : null
   })
-  return Object.fromEntries(tokenIds.map((tokenId, index) => [tokenId, supplies[index]]))
+
+  return Object.fromEntries(
+    tokenIds.map((tokenId, index) => [
+      toTokenFingerprint({policyId: toPolicyId(tokenId), assetNameHex: toAssetName(tokenId)}),
+      supplies[index],
+    ]),
+  )
 }
 
 export const getNFTModerationStatus = async (
@@ -157,19 +170,23 @@ export const getNFTModerationStatus = async (
 }
 
 export const getTokenInfo = async (tokenId: string, apiUrl: string) => {
-  const response = await checkedFetch({
-    endpoint: `${apiUrl}/${toTokenSubject(tokenId)}`,
-    method: 'GET',
-    payload: undefined,
-  }).catch((error) => {
-    Logger.error(error)
+  try {
+    const response = await checkedFetch({
+      endpoint: `${apiUrl}/${toTokenSubject(tokenId)}`,
+      method: 'GET',
+      payload: undefined,
+    }).catch((error) => {
+      Logger.error(error)
 
-    return undefined
-  })
+      return undefined
+    })
 
-  const entry = parseTokenRegistryEntry(response)
+    const entry = parseTokenRegistryEntry(response)
 
-  return entry ? tokenInfo(entry) : fallbackTokenInfo(tokenId)
+    return entry ? tokenInfo(entry) : fallbackTokenInfo(tokenId)
+  } catch (e) {
+    return fallbackTokenInfo(tokenId)
+  }
 }
 
 export const getFundInfo = (config: BackendConfig, isMainnet: boolean): Promise<FundInfoResponse> => {
@@ -265,16 +282,13 @@ function parseNFTs(value: unknown, storageUrl: string): YoroiNft[] {
       return null
     }
 
-    const [policyId, shortName] = id.split('.')
-    const metadata = nftAsset.metadata?.[policyId]?.[shortName]
-    return convertNft({metadata, storageUrl, policyId, shortName: shortName})
+    const policyId = toPolicyId(id)
+    const assetKey = toAssetName(id)
+    const metadata = nftAsset.metadata?.[policyId]?.[assetKey]
+    const version = getNftAssetVersion(nftAsset)
+
+    return convertNft({metadata, storageUrl, id, version})
   })
 
   return tokens.filter(isNonNullable)
 }
-
-function isAssetNFT(asset: unknown): asset is NFTAsset {
-  return isObject(asset) && hasProperties(asset, ['key']) && asset.key === NFT_METADATA_KEY
-}
-
-const NFT_METADATA_KEY = '721'

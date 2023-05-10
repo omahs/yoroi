@@ -16,7 +16,7 @@ import {Token} from '../types/tokens'
 import {YoroiAmount, YoroiAmounts} from '../types/yoroi'
 import {Amounts} from '../utils'
 import {CardanoMobile} from '../wallets'
-import {toAssetNameHex, toPolicyId} from './api/utils'
+import {toAssetName, toPolicyId} from './api/utils'
 import {
   NETWORK_ID as mainnetId,
   WALLET_CONFIG as HASKELL_SHELLEY,
@@ -94,7 +94,7 @@ const identifierToCardanoAsset = async (
   name: CardanoTypes.AssetName
 }> => {
   const policyId = toPolicyId(tokenId)
-  const assetNameHex = toAssetNameHex(tokenId)
+  const assetNameHex = toAssetName(tokenId)
 
   return {
     policyId: await CardanoMobile.ScriptHash.fromBytes(Buffer.from(policyId, 'hex')),

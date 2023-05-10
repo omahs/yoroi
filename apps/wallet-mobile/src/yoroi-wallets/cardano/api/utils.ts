@@ -5,9 +5,13 @@ import {LegacyToken, TokenInfo} from '../../types'
 import {YoroiWallet} from '../types'
 import {TokenRegistryEntry} from './api'
 
+const POLICY_ID_LENGTH_IN_BYTES = 28
+const MAX_ASSET_NAME_LENGTH_IN_BYTES = 32
+// 775f356c756b70ca6b8e65feec417c7da295179eee6c4bfe9ff33176.54657374696e6754657374496d6167653636
+
 export const tokenInfo = (entry: TokenRegistryEntry): TokenInfo => {
   const policyId = toPolicyId(entry.subject)
-  const assetName = toAssetName(entry.subject)
+  const assetName = toUtf8DecodedAssetName(entry.subject)
 
   return {
     id: toTokenId(entry.subject),
@@ -30,7 +34,7 @@ export const tokenInfo = (entry: TokenRegistryEntry): TokenInfo => {
 
 export const fallbackTokenInfo = (tokenId: string): TokenInfo => {
   const policyId = toPolicyId(tokenId)
-  const assetName = toAssetName(tokenId)
+  const assetName = toUtf8DecodedAssetName(tokenId)
 
   return {
     id: toTokenId(tokenId),
@@ -51,22 +55,24 @@ export const fallbackTokenInfo = (tokenId: string): TokenInfo => {
 
 export const toPolicyId = (tokenIdentifier: string) => {
   const tokenSubject = toTokenSubject(tokenIdentifier)
-  return tokenSubject.slice(0, 56)
+  return tokenSubject.slice(0, POLICY_ID_LENGTH_IN_BYTES * 2)
 }
-export const toAssetName = (tokenIdentifier: string): string | undefined => {
-  return hexToUtf8(toAssetNameHex(tokenIdentifier)) || undefined
+export const toUtf8DecodedAssetName = (tokenIdentifier: string): string => {
+  return hexToUtf8(toAssetName(tokenIdentifier))
 }
 
-export const toAssetNameHex = (tokenIdentifier: string): string => {
+export const toAssetName = (tokenIdentifier: string): string => {
   const tokenSubject = toTokenSubject(tokenIdentifier)
-  const maxAssetNameLengthInBytes = 32
-  return tokenSubject.slice(56, 56 + maxAssetNameLengthInBytes * 2)
+  return tokenSubject.slice(
+    POLICY_ID_LENGTH_IN_BYTES * 2,
+    POLICY_ID_LENGTH_IN_BYTES * 2 + MAX_ASSET_NAME_LENGTH_IN_BYTES * 2,
+  )
 }
 
 export const toTokenSubject = (tokenIdentifier: string) => tokenIdentifier.replace('.', '')
 export const toTokenId = (tokenIdentifier: string) => {
   const tokenSubject = toTokenSubject(tokenIdentifier)
-  return `${tokenSubject.slice(0, 56)}.${toAssetNameHex(tokenIdentifier)}`
+  return `${tokenSubject.slice(0, 56)}.${toAssetName(tokenIdentifier)}`
 }
 
 export const hexToUtf8 = (hex: string) => Buffer.from(hex, 'hex').toString('utf-8')
@@ -94,7 +100,7 @@ export const toToken = ({wallet, tokenInfo}: {wallet: YoroiWallet; tokenInfo: To
 
 export const toTokenInfo = (token: LegacyToken): TokenInfo => {
   const policyId = toPolicyId(token.identifier)
-  const assetName = toAssetName(token.identifier)
+  const assetName = toUtf8DecodedAssetName(token.identifier)
 
   return {
     id: toTokenId(token.identifier),

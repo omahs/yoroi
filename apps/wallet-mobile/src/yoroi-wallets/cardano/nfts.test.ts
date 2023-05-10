@@ -4,12 +4,12 @@ import {convertNft, getNftFilenameMediaType} from './nfts'
 
 describe('convertNft', () => {
   describe('id', () => {
-    it('converts id from policyId and shortName', () => {
+    it('preserves id', () => {
       const nft = convertNft({
         metadata: undefined,
         storageUrl: '',
-        policyId: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
-        shortName: '2',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.32',
+        version: 1,
       })
 
       expect(nft.id).toEqual('8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.32')
@@ -17,12 +17,12 @@ describe('convertNft', () => {
   })
 
   describe('fingerprint', () => {
-    it('converts fingerprint from policyId and shortName', () => {
+    it('converts fingerprint from id', () => {
       const nft = convertNft({
         metadata: undefined,
         storageUrl: '',
-        policyId: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
-        shortName: 'Image1',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.Image1',
+        version: 1,
       })
 
       expect(nft.fingerprint).toEqual('asset1a6765qk8cpk2wll3hevw6xy9xry893jrzl9ms3')
@@ -36,22 +36,31 @@ describe('convertNft', () => {
           name: 'Name',
         },
         storageUrl: '',
-        policyId: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
-        shortName: '',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
+        version: 1,
       })
 
       expect(nft.name).toEqual('Name')
     })
 
-    it('converts name from shortName when medata is missing', () => {
+    it('converts name from id when medata is missing', () => {
       const nft = convertNft({
         metadata: {},
         storageUrl: '',
-        policyId: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
-        shortName: '2',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.ExampleName',
+        version: 1,
       })
 
-      expect(nft.name).toEqual('2')
+      expect(nft.name).toEqual('ExampleName')
+
+      const nftV2 = convertNft({
+        metadata: {},
+        storageUrl: '',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.4578616D706C654E616D6532',
+        version: 2,
+      })
+
+      expect(nftV2.name).toEqual('ExampleName2')
     })
   })
 
@@ -62,8 +71,8 @@ describe('convertNft', () => {
           description: 'Description',
         },
         storageUrl: '',
-        policyId: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
-        shortName: '2',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.32',
+        version: 1,
       })
 
       expect(nft.description).toEqual('Description')
@@ -75,8 +84,8 @@ describe('convertNft', () => {
           description: ['Description1', 'Description2'],
         },
         storageUrl: '',
-        policyId: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
-        shortName: '2',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.32',
+        version: 1,
       })
 
       expect(nft.description).toEqual('Description1Description2')
@@ -90,8 +99,8 @@ describe('convertNft', () => {
           image: 'ipfs://QmZ89agib39odneyezeyxp2ekXPLqm86NHCgEXZy9PJ1Gs',
         },
         storageUrl: '',
-        policyId: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
-        shortName: '1',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.32',
+        version: 1,
       })
 
       expect(nft.thumbnail).toEqual('https://ipfs.io/ipfs/QmZ89agib39odneyezeyxp2ekXPLqm86NHCgEXZy9PJ1Gs')
@@ -104,8 +113,8 @@ describe('convertNft', () => {
           image: 'https://example.com/image.jpeg',
         },
         storageUrl: '',
-        policyId: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
-        shortName: '1',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.32',
+        version: 1,
       })
 
       expect(nft.thumbnail).toEqual('https://example.com/image.jpeg')
@@ -118,8 +127,8 @@ describe('convertNft', () => {
           image: ['https://example.com/', 'image.jpeg'],
         },
         storageUrl: '',
-        policyId: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
-        shortName: '1',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.32',
+        version: 1,
       })
 
       expect(nft.thumbnail).toEqual('https://example.com/image.jpeg')
@@ -132,8 +141,8 @@ describe('convertNft', () => {
       const nft = convertNft({
         metadata: {},
         storageUrl: '',
-        policyId: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4',
-        shortName: '1',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.32',
+        version: 1,
       })
 
       expect(nft.metadata.policyId).toEqual('8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4')
@@ -145,11 +154,20 @@ describe('convertNft', () => {
       const nft = convertNft({
         metadata: {},
         storageUrl: '',
-        policyId: '',
-        shortName: '1',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.1',
+        version: 1,
       })
 
       expect(nft.metadata.assetNameHex).toEqual('31')
+
+      const nftV2 = convertNft({
+        metadata: {},
+        storageUrl: '',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.32',
+        version: 2,
+      })
+
+      expect(nftV2.metadata.assetNameHex).toEqual('32')
     })
   })
 
@@ -162,8 +180,8 @@ describe('convertNft', () => {
           image: 'https://example.com/image.jpeg',
         },
         storageUrl: '',
-        policyId: '',
-        shortName: '1',
+        id: '8e2c7604711faef7c84c91b286c7327d17df825b7f0c88ec0332c0b4.1',
+        version: 1,
       })
 
       expect(nft.metadata.originalMetadata).toEqual({
