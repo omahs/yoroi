@@ -832,22 +832,27 @@ export const makeShelleyWallet = (constants: typeof MAINNET | typeof TESTNET) =>
     }
 
     async signTxWithLedger(unsignedTx: YoroiUnsignedTx, useUSB: boolean): Promise<YoroiSignedTx> {
+      console.log('signTxWithLedger Shelley', unsignedTx, useUSB)
       if (!this.hwDeviceInfo) throw new Error('Invalid wallet state')
 
+      console.log('before buildLedgerPayload')
       const ledgerPayload = await Cardano.buildLedgerPayload(
         unsignedTx.unsignedTx,
         CHAIN_NETWORK_ID,
-        PROTOCOL_MAGIC,
+        1, // TODO: 1 or PROTOCOL_MAGIC?
         STAKING_KEY_PATH,
       )
+      console.log('ledgerPayload', ledgerPayload)
 
       const signedLedgerTx = await signTxWithLedger(ledgerPayload, this.hwDeviceInfo, useUSB)
+      console.log('signedLedgerTx', signedLedgerTx)
       const signedTx = await Cardano.buildLedgerSignedTx(
         unsignedTx.unsignedTx,
         signedLedgerTx,
         PURPOSE,
         this.publicKeyHex,
       )
+      console.log('signedTx', signedTx)
 
       return yoroiSignedTx({
         unsignedTx,

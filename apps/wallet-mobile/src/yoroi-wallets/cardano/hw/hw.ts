@@ -271,6 +271,7 @@ export const signTxWithLedger = async (
   try {
     Logger.debug('ledgerUtils::signTxWithLedger called')
     const appAda = await connectionHandler(hwDeviceInfo.hwFeatures.deviceId, hwDeviceInfo.hwFeatures.deviceObj, useUSB)
+    Logger.debug('ledgerUtils::signTxWithLedger signRequest', signRequest)
     Logger.debug('ledgerUtils::signTxWithLedger inputs', signRequest.tx.inputs)
     Logger.debug('ledgerUtils::signTxWithLedger outputs', signRequest.tx.outputs)
     const ledgerSignature: SignTransactionResponse = await appAda.signTransaction(signRequest)
@@ -278,6 +279,7 @@ export const signTxWithLedger = async (
     Logger.debug('ledgerUtils::ledgerSignature', JSON.stringify(ledgerSignature))
     return ledgerSignature
   } catch (e) {
+    Logger.debug('ledgerUtils::signTxWithLedger error', e)
     throw mapLedgerError(e)
   }
 }

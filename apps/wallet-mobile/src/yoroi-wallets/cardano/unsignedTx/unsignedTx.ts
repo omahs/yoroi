@@ -196,8 +196,9 @@ type VotingRegistration = {
   nonce: number
 }
 const Voting = {
-  toRegistration: ({votingRegistration}: {votingRegistration?: VotingRegistration}): YoroiVoting['registration'] =>
-    votingRegistration,
+  toRegistration: ({votingRegistration}: {votingRegistration?: VotingRegistration}): YoroiVoting['registration'] => {
+    return votingRegistration ? {...votingRegistration, paymentAddress: votingRegistration.rewardAddress} : undefined
+  },
 }
 
 export const toDisplayAddress = async (address: string) => {

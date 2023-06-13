@@ -133,24 +133,32 @@ export const ConfirmTx = ({
   const onConfirm = React.useCallback(
     async (easyConfirmDecryptKey?: string) => {
       try {
+        console.log('on confirm')
         setIsProcessing(true)
 
         let signedTx
         if (wallet.isEasyConfirmationEnabled) {
+          console.log('easy confirm')
           if (!isEmptyString(easyConfirmDecryptKey)) {
             setDialogStep(DialogStep.Signing)
             signedTx = await smoothModalNotification(wallet.signTx(yoroiUnsignedTx, easyConfirmDecryptKey))
+            console.log('got signed tx', signedTx)
           } else {
             throw new Error('Empty decrypt key')
           }
         } else {
           if (wallet.isHW) {
+            console.log('hw', wallet)
             setDialogStep(DialogStep.WaitingHwResponse)
             signedTx = await wallet.signTxWithLedger(yoroiUnsignedTx, useUSB)
+            console.log('got signed tx', signedTx)
           } else {
+            console.log('not hw')
             const rootKey = await wallet.encryptedStorage.rootKey.read(password)
+            console.log('got root key', rootKey)
             setDialogStep(DialogStep.Signing)
             signedTx = await smoothModalNotification(wallet.signTx(yoroiUnsignedTx, rootKey))
+            console.log('got signed tx', signedTx)
           }
         }
 
@@ -160,6 +168,7 @@ export const ConfirmTx = ({
           setDialogStep(DialogStep.Closed)
           onSuccess(signedTx)
         } catch (err) {
+          console.log('caught error', err)
           if (err instanceof LocalizableError) {
             showError({
               errorMessage: strings.errorMessage(err),
@@ -176,6 +185,7 @@ export const ConfirmTx = ({
           onError?.(err as Error)
         }
       } catch (err) {
+        console.log('caught error 2', err)
         if (err instanceof WrongPassword) {
           showError({
             errorMessage: strings.incorrectPasswordTitle,

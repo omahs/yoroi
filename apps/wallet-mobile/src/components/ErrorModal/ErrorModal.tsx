@@ -25,6 +25,9 @@ export const ErrorView = ({title, errorMessage, errorLogs, onDismiss}: ErrorView
     setShowErrorLogs(!showErrorLogs)
   }
 
+  console.log('errorMessage', errorMessage)
+  console.log('errorLogs', errorLogs)
+
   return (
     <ScrollView style={styles.scrollView} testID="errorView">
       <View style={styles.headerView}>

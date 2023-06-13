@@ -32,7 +32,7 @@ export type YoroiVoting = {
   registration?: {
     votingPublicKey: string
     stakingPublicKey: string
-    rewardAddress: string
+    paymentAddress: string
     nonce: number
   }
 }
