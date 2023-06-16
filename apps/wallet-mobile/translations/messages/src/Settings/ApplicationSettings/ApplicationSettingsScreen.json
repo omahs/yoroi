@@ -4,14 +4,14 @@
     "defaultMessage": "!!!Your language",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 109,
+      "line": 108,
       "column": 12,
-      "index": 3916
+      "index": 3844
     },
     "end": {
-      "line": 112,
+      "line": 111,
       "column": 3,
-      "index": 4027
+      "index": 3955
     }
   },
   {
@@ -19,14 +19,14 @@
     "defaultMessage": "!!!English",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 113,
+      "line": 112,
       "column": 19,
-      "index": 4048
+      "index": 3976
     },
     "end": {
-      "line": 116,
+      "line": 115,
       "column": 3,
-      "index": 4160
+      "index": 4088
     }
   },
   {
@@ -34,14 +34,14 @@
     "defaultMessage": "!!!Security",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 117,
+      "line": 116,
       "column": 12,
-      "index": 4174
+      "index": 4102
     },
     "end": {
-      "line": 120,
+      "line": 119,
       "column": 3,
-      "index": 4280
+      "index": 4208
     }
   },
   {
@@ -49,14 +49,14 @@
     "defaultMessage": "!!!Change PIN",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 121,
+      "line": 120,
       "column": 13,
-      "index": 4295
+      "index": 4223
     },
     "end": {
-      "line": 124,
+      "line": 123,
       "column": 3,
-      "index": 4404
+      "index": 4332
     }
   },
   {
@@ -64,14 +64,14 @@
     "defaultMessage": "!!!Sign in with your biometrics",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 125,
+      "line": 124,
       "column": 20,
-      "index": 4426
+      "index": 4354
     },
     "end": {
-      "line": 128,
+      "line": 127,
       "column": 3,
-      "index": 4560
+      "index": 4488
     }
   },
   {
@@ -79,14 +79,14 @@
     "defaultMessage": "!!!Crash reporting",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 129,
+      "line": 128,
       "column": 18,
-      "index": 4580
+      "index": 4508
     },
     "end": {
-      "line": 132,
+      "line": 131,
       "column": 3,
-      "index": 4699
+      "index": 4627
     }
   },
   {
@@ -94,14 +94,14 @@
     "defaultMessage": "!!!Send crash reports to Emurgo. Changes to this option will be reflected after restarting the application.",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 133,
+      "line": 132,
       "column": 22,
-      "index": 4723
+      "index": 4651
     },
     "end": {
-      "line": 137,
+      "line": 136,
       "column": 3,
-      "index": 4941
+      "index": 4869
     }
   },
   {
@@ -109,14 +109,14 @@
     "defaultMessage": "!!!Terms of Use",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 138,
+      "line": 137,
       "column": 14,
-      "index": 4957
+      "index": 4885
     },
     "end": {
-      "line": 141,
+      "line": 140,
       "column": 3,
-      "index": 5069
+      "index": 4997
     }
   },
   {
@@ -124,14 +124,14 @@
     "defaultMessage": "!!!Support",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 142,
+      "line": 141,
       "column": 11,
-      "index": 5082
+      "index": 5010
     },
     "end": {
-      "line": 145,
+      "line": 144,
       "column": 3,
-      "index": 5186
+      "index": 5114
     }
   },
   {
@@ -139,14 +139,14 @@
     "defaultMessage": "!!!Current version:",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 146,
+      "line": 145,
       "column": 11,
-      "index": 5199
+      "index": 5127
     },
     "end": {
-      "line": 149,
+      "line": 148,
       "column": 3,
-      "index": 5312
+      "index": 5240
     }
   },
   {
@@ -154,14 +154,14 @@
     "defaultMessage": "!!!Commit:",
     "file": "src/Settings/ApplicationSettings/ApplicationSettingsScreen.tsx",
     "start": {
-      "line": 150,
+      "line": 149,
       "column": 10,
-      "index": 5324
+      "index": 5252
     },
     "end": {
-      "line": 153,
+      "line": 152,
       "column": 3,
-      "index": 5427
+      "index": 5355
     }
   }
 ]

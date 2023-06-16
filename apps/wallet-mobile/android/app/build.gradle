@@ -1,14 +1,6 @@
 apply plugin: "com.android.application"
 apply plugin: "com.facebook.react"
 
-project.ext.envConfigFiles = [
-  devdebug: '.env',
-  productionrelease: '.env.production',
-  productiondebug: '.env.production',
-  nightlyrelease: '.env.nightly',
-  nightlydebug: '.env.nightly',
-]
-
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
 import com.android.build.OutputFile
@@ -103,13 +95,13 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.emurgo"
+    namespace "com.yoroi"
     defaultConfig {
-        applicationId "com.emurgo"
+        applicationId "com.yoroi"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 525
-        versionName "4.10.3"
+        versionCode 500
+        versionName "4.10.0"
     }
 
     splits {
@@ -120,7 +112,6 @@ android {
             include (*reactNativeArchitectures())
         }
     }
-
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -128,9 +119,7 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
-        // production managed by fastlane
     }
-
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
@@ -141,25 +130,6 @@ android {
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-        }
-    }
-
-    // Specifies one flavor dimension.
-    flavorDimensions "version"
-    productFlavors {
-        production {
-            dimension "version"
-            resValue "string", "build_config_package", "com.emurgo"
-        }
-        dev {
-            dimension "version"
-            applicationIdSuffix ".dev"
-            resValue "string", "build_config_package", "com.emurgo"
-        }
-        nightly {
-            dimension "version"
-            applicationIdSuffix ".nightly"
-            resValue "string", "build_config_package", "com.emurgo"
         }
     }
 
