@@ -1,6 +1,45 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  AddressType,
+  AssetGroup,
+  CertificateType,
+  CIP36VoteDelegationType,
+  CIP36VoteRegistrationFormat,
+  SignTransactionRequest,
+  SignTransactionResponse,
+  StakeCredentialParamsType,
+  Token,
+  TransactionSigningMode,
+  TxAuxiliaryDataType,
+  TxInput,
+  TxOutputDestinationType,
+  Withdrawal,
+} from '@cardano-foundation/ledgerjs-hw-app-cardano'
+import {
+  Bip32PublicKey,
+  BootstrapWitness,
+  Certificates,
+  MultiAsset,
+  StakeCredential,
+  TransactionOutputs,
+  Value,
+  Vkeywitness,
+  WasmModuleProxy,
+  Withdrawals,
+} from '@emurgo/cross-csl-core'
+import {
+  Address,
+  Addressing,
+  Bip44DerivationLevels,
+  CardanoAddressedUtxo,
+  CatalystLabels,
+  MetadataJsonSchema,
+  TxOutput,
+  UnsignedTx,
+} from '@emurgo/yoroi-lib'
 import assert from 'assert'
 import {BigNumber} from 'bignumber.js'
+import {Buffer} from 'buffer'
 import ExtendableError from 'es6-error'
 import _ from 'lodash'
 import DeviceInfo from 'react-native-device-info'
@@ -27,7 +66,7 @@ import type {
   YoroiEntry,
   YoroiNftModerationStatus,
 } from '../../types'
-import {Quantity, StakingInfo, YoroiSignedTx, YoroiUnsignedTx} from '../../types'
+import {Quantity, StakingInfo, YoroiUnsignedTx} from '../../types'
 import {Quantities} from '../../utils'
 import {parseSafe} from '../../utils/parsing'
 import {validatePassword} from '../../utils/validators'
@@ -38,7 +77,7 @@ import {encryptWithPassword} from '../catalyst/catalystCipher'
 import {generatePrivateKeyForCatalyst} from '../catalyst/catalystUtils'
 import {AddressChain, AddressChainJSON, Addresses, AddressGenerator} from '../chain'
 import * as MAINNET from '../constants/mainnet/constants'
-import {VOTING_KEY_PATH} from '../constants/mainnet/constants'
+import {REWARD_ADDRESS_ADDRESSING, VOTING_KEY_PATH} from '../constants/mainnet/constants'
 import * as TESTNET from '../constants/testnet/constants'
 import {CardanoError} from '../errors'
 import {ADDRESS_TYPE_TO_CHANGE} from '../formatPath'
@@ -62,9 +101,11 @@ import {
   YoroiWallet,
 } from '../types'
 import {yoroiUnsignedTx} from '../unsignedTx'
-import {deriveRewardAddressHex, toSendTokenList} from '../utils'
+import {deriveRewardAddressHex, isByron, isHaskellShelley, toSendTokenList} from '../utils'
 import {makeUtxoManager, UtxoManager} from '../utxoManager'
 import {makeKeys} from './makeKeys'
+import {NUMBERS} from '../numbers'
+import Certificate = CardanoTypes.Certificate
 
 type WalletState = {
   lastGeneratedAddressIndex: number
@@ -112,7 +153,7 @@ export const makeShelleyWallet = (constants: typeof MAINNET | typeof TESTNET) =>
     POOL_DEPOSIT,
     PRIMARY_TOKEN,
     PRIMARY_TOKEN_INFO,
-    PROTOCOL_MAGIC,
+    // PROTOCOL_MAGIC,
     PURPOSE,
     REWARD_ADDRESS_ADDRESSING,
     STAKING_KEY_INDEX,
@@ -830,29 +871,71 @@ export const makeShelleyWallet = (constants: typeof MAINNET | typeof TESTNET) =>
         addressedUtxos,
       })
     }
+    private getRewardAddressAddressing() {
+      return {
+        path: [
+          this.getPurpose(),
+          NUMBERS.COIN_TYPES.CARDANO,
+          NUMBERS.ACCOUNT_INDEX + NUMBERS.HARD_DERIVATION_START,
+          NUMBERS.CHAIN_DERIVATIONS.CHIMERIC_ACCOUNT,
+          NUMBERS.STAKING_KEY_INDEX,
+        ],
+        startLevel: NUMBERS.BIP44_DERIVATION_LEVELS.PURPOSE,
+      }
+    }
 
-    async signTxWithLedger(unsignedTx: YoroiUnsignedTx, useUSB: boolean): Promise<YoroiSignedTx> {
+    private getPurpose(): number {
+      if (this.walletImplementationId == null) throw new Error('Invalid wallet: walletImplementationId')
+
+      if (isByron(this.walletImplementationId)) {
+        return NUMBERS.WALLET_TYPE_PURPOSE.BIP44
+      } else if (isHaskellShelley(this.walletImplementationId)) {
+        return NUMBERS.WALLET_TYPE_PURPOSE.CIP1852
+      } else {
+        throw new Error('CardanoWallet::_getPurpose: invalid wallet impl. id')
+      }
+    }
+    async signTxWithLedger(unsignedTx: YoroiUnsignedTx, useUSB: boolean): Promise<{txId: string; encodedTx: any}> {
+      console.log('signTxWithLedger Shelley', unsignedTx, useUSB)
       if (!this.hwDeviceInfo) throw new Error('Invalid wallet state')
 
-      const ledgerPayload = await Cardano.buildLedgerPayload(
-        unsignedTx.unsignedTx,
-        CHAIN_NETWORK_ID,
-        1,
-        STAKING_KEY_PATH,
-      )
+      console.log('before buildLedgerPayload')
+      const ledgerPayload =
+        // extensionPayload ||
+        await Cardano.buildLedgerPayload(
+          unsignedTx.unsignedTx,
+          CHAIN_NETWORK_ID,
+          1, // TODO: 1 or PROTOCOL_MAGIC?
+          STAKING_KEY_PATH,
+        )
+      console.log('ledgerPayload', ledgerPayload)
+      // if (STAKING_KEY_PATH) {
+      //   throw new Error('END')
+      // }
 
-      const signedLedgerTx = await signTxWithLedger(ledgerPayload, this.hwDeviceInfo, useUSB)
-      const signedTx = await Cardano.buildLedgerSignedTx(
-        unsignedTx.unsignedTx,
-        signedLedgerTx,
-        PURPOSE,
-        this.publicKeyHex,
-      )
-
-      return yoroiSignedTx({
-        unsignedTx,
-        signedTx,
+      const signedLedgerTx = await signTxWithLedger(ledgerPayload as any, this.hwDeviceInfo, useUSB)
+      console.log('signedLedgerTx', signedLedgerTx)
+      const key = await CardanoMobile.Bip32PublicKey.fromBytes(Buffer.from(this.publicKeyHex, 'hex'))
+      // const withLevels = asHasLevels<ConceptualWallet>(request.publicDeriver)
+      const signedTx = await buildLedgerSignedTx(unsignedTx.unsignedTx, signedLedgerTx, {
+        key,
+        addressing: this.getRewardAddressAddressing(),
       })
+
+      const txBody = await signedTx.body()
+      const txId = Buffer.from(await (await CardanoMobile.hashTransaction(txBody)).toBytes()).toString('hex')
+
+      console.log('signedTx', signedTx)
+
+      return {txId, encodedTx: await signedTx.toBytes()}
+
+      // const result = yoroiSignedTx({
+      //   unsignedTx,
+      //   signedTx,
+      // })
+      //
+      // console.log('normalized result', result)
+      // return result
     }
 
     // =================== backend API =================== //
@@ -1154,3 +1237,588 @@ const keys: Array<keyof WalletJSON> = [
 
 const encryptAndSaveRootKey = (wallet: YoroiWallet, rootKey: string, password: string) =>
   wallet.encryptedStorage.rootKey.write(rootKey, password)
+
+async function buildLedgerSignedTx(
+  unsignedTx: UnsignedTx,
+  signedLedgerTx: SignTransactionResponse,
+  publicKey: {addressing: Addressing; key: Bip32PublicKey},
+) {
+  const isSameArray = (array1: Array<number>, array2: Array<number>) =>
+    array1.length === array2.length && array1.every((value, index) => value === array2[index])
+
+  const findWitness = (path: Array<number>) => {
+    for (const witness of signedLedgerTx.witnesses) {
+      if (isSameArray(witness.path, path)) {
+        return witness.witnessSignatureHex
+      }
+    }
+
+    throw new Error(`buildSignedTransaction no witness for ${JSON.stringify(path)}`)
+  }
+
+  const keyLevel = publicKey.addressing.startLevel + publicKey.addressing.path.length - 1
+  const witSet = await Cardano.Wasm.TransactionWitnessSet.new()
+  const bootstrapWitnesses: Array<BootstrapWitness> = []
+  const vkeys: Array<Vkeywitness> = []
+
+  // Note: Ledger removes duplicate witnesses
+  // but there may be a one-to-many relationship
+  // ex: same witness is used in both a bootstrap witness and a vkey witness
+  const seenVKeyWit = new Set<string>()
+  const seenBootstrapWit = new Set<string>()
+
+  for (const utxo of unsignedTx.senderUtxos) {
+    verifyFromBip44Root(utxo.addressing)
+    const witness = findWitness(utxo.addressing.path)
+    const addressKey = await derivePublicByAddressing(utxo.addressing, {
+      level: keyLevel,
+      key: publicKey.key,
+    })
+
+    if (await Cardano.Wasm.ByronAddress.isValid(utxo.receiver)) {
+      const byronAddr = await Cardano.Wasm.ByronAddress.fromBase58(utxo.receiver)
+      const bootstrapWit = await Cardano.Wasm.BootstrapWitness.new(
+        await Cardano.Wasm.Vkey.new(await addressKey.toRawKey()),
+        await Cardano.Wasm.Ed25519Signature.fromBytes(Buffer.from(witness, 'hex')),
+        await addressKey.chaincode(),
+        await byronAddr.attributes(),
+      )
+      const asString = Buffer.from(await bootstrapWit.toBytes()).toString('hex')
+
+      if (seenBootstrapWit.has(asString)) {
+        continue
+      }
+
+      seenBootstrapWit.add(asString)
+      bootstrapWitnesses.push(bootstrapWit)
+      continue
+    }
+
+    const vkeyWit = await Cardano.Wasm.Vkeywitness.new(
+      await Cardano.Wasm.Vkey.new(await addressKey.toRawKey()),
+      await Cardano.Wasm.Ed25519Signature.fromBytes(Buffer.from(witness, 'hex')),
+    )
+    const asString = Buffer.from(await vkeyWit.toBytes()).toString('hex')
+
+    if (seenVKeyWit.has(asString)) {
+      continue
+    }
+
+    seenVKeyWit.add(asString)
+    vkeys.push(vkeyWit)
+  }
+
+  // add any staking key needed
+  for (const witness of signedLedgerTx.witnesses) {
+    const addressing = {
+      path: witness.path,
+      startLevel: 1,
+    }
+    verifyFromBip44Root(addressing)
+
+    if (witness.path[Bip44DerivationLevels.CHAIN.level - 1] === ChainDerivations.CHIMERIC_ACCOUNT) {
+      // TODO: what is this?
+      const stakingKey = await derivePublicByAddressing(addressing, {
+        level: keyLevel,
+        key: publicKey.key,
+      })
+      const vkeyWit = await Cardano.Wasm.Vkeywitness.new(
+        await Cardano.Wasm.Vkey.new(await stakingKey.toRawKey()),
+        await Cardano.Wasm.Ed25519Signature.fromBytes(Buffer.from(witness.witnessSignatureHex, 'hex')),
+      )
+      const asString = Buffer.from(await vkeyWit.toBytes()).toString('hex')
+
+      if (seenVKeyWit.has(asString)) {
+        continue
+      }
+
+      seenVKeyWit.add(asString)
+      vkeys.push(vkeyWit)
+    }
+  }
+
+  if (bootstrapWitnesses.length > 0) {
+    const bootstrapWitWasm = await Cardano.Wasm.BootstrapWitnesses.new()
+
+    for (const bootstrapWit of bootstrapWitnesses) {
+      await bootstrapWitWasm.add(bootstrapWit)
+    }
+
+    await witSet.setBootstraps(bootstrapWitWasm)
+  }
+
+  if (vkeys.length > 0) {
+    const vkeyWitWasm = await Cardano.Wasm.Vkeywitnesses.new()
+
+    for (const vkey of vkeys) {
+      await vkeyWitWasm.add(vkey)
+    }
+
+    await witSet.setVkeys(vkeyWitWasm)
+  }
+
+  let auxData = unsignedTx.auxiliaryData
+  if (unsignedTx.catalystRegistrationData) {
+    console.log('adding catalyst registration data')
+    auxData = await generateRegistrationMetadata(
+      Cardano.Wasm,
+      unsignedTx.catalystRegistrationData.votingPublicKeyHex,
+      unsignedTx.catalystRegistrationData.stakingPublicKeyHex,
+      unsignedTx.catalystRegistrationData.paymentAddress,
+      unsignedTx.catalystRegistrationData.nonce,
+      () => Promise.resolve(signedLedgerTx.auxiliaryDataSupplement?.cip36VoteRegistrationSignatureHex ?? ''),
+    )
+  }
+
+  if (auxData) {
+    await unsignedTx.txBuilder.setAuxiliaryData(auxData)
+  }
+
+  const newTx = await unsignedTx.txBuilder.build()
+
+  // TODO: handle script witnesses
+  const signedTx = await Cardano.Wasm.Transaction.new(newTx, witSet, auxData)
+  console.log('signedTx', signedTx)
+
+  return signedTx
+
+  // const id = await signedTx
+  //   .body()
+  //   .then((txBody) => Cardano.Wasm.hashTransaction(txBody))
+  //   .then((hash) => hash.toBytes())
+  //   .then((bytes) => Buffer.from(bytes).toString('hex'))
+  // const encodedTx = await signedTx.toBytes()
+  //
+  // return {
+  //   id,
+  //   encodedTx,
+  // }
+}
+
+const verifyFromBip44Root = (addressing: CardanoTypes.Addressing): void => {
+  const accountPosition = addressing.startLevel
+  if (accountPosition !== Bip44DerivationLevels.PURPOSE.level) {
+    throw new Error(`verifyFromBip44Root addressing does not start from root`)
+  }
+  const lastLevelSpecified = addressing.startLevel + addressing.path.length - 1
+  if (lastLevelSpecified !== Bip44DerivationLevels.ADDRESS.level) {
+    throw new Error(`verifyFromBip44Root incorrect addressing size`)
+  }
+}
+
+const derivePublicByAddressing = async (
+  addressing: CardanoTypes.Addressing,
+  startingFrom: {
+    key: CardanoTypes.Bip32PublicKey
+    level: number
+  },
+) => {
+  if (startingFrom.level + 1 < addressing.startLevel) {
+    throw new Error('derivePublicByAddressing: keyLevel < startLevel')
+  }
+
+  let derivedKey = startingFrom.key
+
+  for (let i = startingFrom.level - addressing.startLevel + 1; i < addressing.path.length; i++) {
+    derivedKey = await derivedKey.derive(addressing.path[i])
+  }
+
+  return derivedKey
+}
+
+const generateRegistrationMetadata = async (
+  wasm: WasmModuleProxy,
+  votingPublicKeyHex: string,
+  stakingPublicKeyHex: string,
+  paymentAddress: string,
+  nonce: number,
+  signer: (hashedMetadata: Buffer) => Promise<string>,
+) => {
+  const registrationData = await wasm.encodeJsonStrToMetadatum(
+    JSON.stringify({
+      '1': [[`0x${votingPublicKeyHex}`, 1]],
+      '2': `0x${stakingPublicKeyHex}`,
+      '3': `0x${paymentAddress}`,
+      '4': nonce,
+      '5': 0,
+    }),
+    MetadataJsonSchema.BasicConversions,
+  )
+
+  const generalMetadata = await wasm.GeneralTransactionMetadata.new()
+  await generalMetadata.insert(await wasm.BigNum.fromStr(CatalystLabels.DATA.toString()), registrationData)
+
+  const signedMetadata = await signer(Buffer.from([]))
+
+  await generalMetadata.insert(
+    await wasm.BigNum.fromStr(CatalystLabels.SIG.toString()),
+    await wasm.encodeJsonStrToMetadatum(
+      JSON.stringify({
+        '1': `0x${signedMetadata}`,
+      }),
+      MetadataJsonSchema.BasicConversions,
+    ),
+  )
+
+  const metadataList = await wasm.MetadataList.new()
+  await metadataList.add(await wasm.TransactionMetadatum.fromBytes(await generalMetadata.toBytes()))
+  await metadataList.add(await wasm.TransactionMetadatum.newList(await wasm.MetadataList.new()))
+
+  return wasm.AuxiliaryData.fromBytes(await metadataList.toBytes())
+}
+
+export const ChainDerivations = Object.freeze({
+  EXTERNAL: 0,
+  INTERNAL: 1,
+  CHIMERIC_ACCOUNT: 2,
+})
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const extensionPayload = {
+  additionalWitnessPaths: [],
+  signingMode: 'ordinary_transaction',
+  tx: {
+    auxiliaryData: {
+      params: {
+        delegations: [
+          {
+            type: 'cip36_vote_key_keyHex',
+            voteKeyHex: '4c82b146802ab90af35f6978d6bfde985c9b534e7bdeda081f78ebe4ff0eea8a',
+            weight: 1,
+          },
+        ],
+        format: 'cip_36',
+        nonce: 32854297,
+        paymentDestination: {
+          params: {
+            params: {
+              spendingPath: [2147485500, 2147485463, 2147483648, 0, 0],
+              stakingPath: [2147485500, 2147485463, 2147483648, 2, 0],
+            },
+            type: 0,
+          },
+          type: 'device_owned',
+        },
+        stakingPath: [2147485500, 2147485463, 2147483648, 2, 0],
+        votingPurpose: 0,
+      },
+      type: 'cip36_registration',
+    },
+    certificates: null,
+    fee: '176589',
+    inputs: [
+      {
+        outputIndex: 5,
+        path: [2147485500, 2147485463, 2147483648, 1, 0],
+        txHashHex: 'fd57a8f0a9e4460ed342daf385bfb236f1880de01551d6e070646c2be8257001',
+      },
+    ],
+    network: {
+      networkId: 0,
+      protocolMagic: 1,
+    },
+    outputs: [
+      {
+        amount: '994632522',
+        destination: {
+          params: {
+            params: {
+              spendingPath: [2147485500, 2147485463, 2147483648, 1, 1],
+              stakingPath: [2147485500, 2147485463, 2147483648, 2, 0],
+            },
+            type: 0,
+          },
+          type: 'device_owned',
+        },
+        tokenBundle: null,
+      },
+    ],
+    ttl: '32861485',
+    withdrawals: null,
+  },
+}
+
+function _transformToLedgerInputs(inputs: Array<CardanoAddressedUtxo>): Array<TxInput> {
+  for (const input of inputs) {
+    verifyFromBip44Root(input.addressing) // Assumed function, TypeScript conversion depends on its definition
+  }
+  return inputs
+    .map((input) => ({
+      txHashHex: input.txHash,
+      outputIndex: input.txIndex,
+      path: input.addressing.path,
+    }))
+    .sort(compareInputs) // Assumed function, TypeScript conversion depends on its definition
+}
+
+function compareInputs(a: TxInput, b: TxInput): number {
+  if (a.txHashHex !== b.txHashHex) {
+    return a.txHashHex < b.txHashHex ? -1 : 1
+  }
+  return a.outputIndex - b.outputIndex
+}
+
+async function createLedgerSignTxPayload(request: {
+  signRequest: HaskellShelleyTxSignRequest
+  byronNetworkMagic: number
+  networkId: number
+  addressingMap: (input: string) => Addressing | undefined
+}): Promise<SignTransactionRequest> {
+  const txBody = request.signRequest.unsignedTx.build()
+
+  // Inputs
+  const ledgerInputs = _transformToLedgerInputs(request.signRequest.senderUtxos)
+
+  // Output
+  const ledgerOutputs = _transformToLedgerOutputs({
+    networkId: request.networkId,
+    txOutputs: txBody.outputs(),
+    changeAddrs: request.signRequest.changeAddr,
+    addressingMap: request.addressingMap,
+  })
+
+  // withdrawals
+  const withdrawals = txBody.withdrawals()
+
+  const certificates = txBody.certs()
+
+  const ledgerWithdrawal: Withdrawal[] = []
+  if (withdrawals && withdrawals.len() > 0) {
+    ledgerWithdrawal.push(...(await formatLedgerWithdrawals(withdrawals, request.addressingMap)))
+  }
+
+  const ledgerCertificates: Certificate[] = []
+  if (certificates && certificates.len() > 0) {
+    ledgerCertificates.push(...(await formatLedgerCertificates(request.networkId, certificates, request.addressingMap)))
+  }
+
+  const ttl = txBody.ttl()
+
+  let auxiliaryData
+  if (request.signRequest.ledgerNanoCatalystRegistrationTxSignData) {
+    const {votingPublicKey, stakingKeyPath, nonce, paymentKeyPath} =
+      request.signRequest.ledgerNanoCatalystRegistrationTxSignData
+
+    auxiliaryData = {
+      type: TxAuxiliaryDataType.CIP36_REGISTRATION,
+      params: {
+        format: CIP36VoteRegistrationFormat.CIP_36,
+        delegations: [
+          {
+            type: CIP36VoteDelegationType.KEY,
+            voteKeyHex: votingPublicKey.replace(/^0x/, ''),
+            weight: 1,
+          },
+        ],
+        stakingPath: stakingKeyPath,
+        paymentDestination: {
+          type: TxOutputDestinationType.DEVICE_OWNED,
+          params: {
+            type: AddressType.BASE_PAYMENT_KEY_STAKE_KEY,
+            params: {
+              spendingPath: paymentKeyPath,
+              stakingPath: stakingKeyPath,
+            },
+          },
+        },
+        nonce,
+        votingPurpose: 0,
+      },
+    }
+  }
+
+  return {
+    signingMode: TransactionSigningMode.ORDINARY_TRANSACTION,
+    tx: {
+      inputs: ledgerInputs,
+      outputs: ledgerOutputs as any,
+      ttl: ttl === undefined ? ttl : ttl.toString(),
+      fee: txBody.fee().to_str(),
+      network: {
+        networkId: request.networkId,
+        protocolMagic: request.byronNetworkMagic,
+      },
+      withdrawals: ledgerWithdrawal.length === 0 ? null : ledgerWithdrawal,
+      certificates: ledgerCertificates.length === 0 ? null : (ledgerCertificates as any),
+      auxiliaryData,
+      validityIntervalStart: undefined,
+    },
+    additionalWitnessPaths: [],
+  }
+}
+
+async function formatLedgerCertificates(
+  networkId: number,
+  certificates: Certificates,
+  addressingMap: (val: string) => any,
+): Promise<Array<Certificate>> {
+  const getPath = async (stakeCredential: StakeCredential): Promise<Array<number>> => {
+    const rewardAddr = await Cardano.Wasm.RewardAddress.new(networkId, stakeCredential)
+    const addressPayload = Buffer.from(await (await rewardAddr.toAddress()).toBytes()).toString('hex')
+    const addressing = addressingMap(addressPayload)
+    if (addressing == null) {
+      throw new Error(`Ledger only supports certificates from own address ${addressPayload}`)
+    }
+    return addressing.path
+  }
+
+  const result: any[] = []
+  for (let i = 0; i < (await certificates.len()); i++) {
+    const cert = await certificates.get(i)
+
+    const registrationCert = await cert.asStakeRegistration()
+    if (registrationCert != null) {
+      result.push({
+        type: CertificateType.STAKE_REGISTRATION,
+        params: {
+          stakeCredential: {
+            type: StakeCredentialParamsType.KEY_PATH,
+            keyPath: getPath(await registrationCert.stakeCredential()),
+          },
+        },
+      })
+      continue
+    }
+    const deregistrationCert = await cert.asStakeDeregistration()
+    if (deregistrationCert != null) {
+      result.push({
+        type: CertificateType.STAKE_DEREGISTRATION,
+        params: {
+          stakeCredential: {
+            type: StakeCredentialParamsType.KEY_PATH,
+            keyPath: getPath(await deregistrationCert.stakeCredential()),
+          },
+        },
+      })
+      continue
+    }
+    const delegationCert = await cert.asStakeDelegation()
+    if (delegationCert != null) {
+      result.push({
+        type: CertificateType.STAKE_DELEGATION,
+        params: {
+          stakeCredential: {
+            type: StakeCredentialParamsType.KEY_PATH,
+            keyPath: getPath(await delegationCert.stakeCredential()),
+          },
+          poolKeyHashHex: Buffer.from(await (await delegationCert.poolKeyhash()).toBytes()).toString('hex'),
+        },
+      })
+      continue
+    }
+    throw new Error(`Ledger doesn't support this certificate type`)
+  }
+  return result
+}
+
+async function formatLedgerWithdrawals(
+  withdrawals: Withdrawals,
+  addressingMap: (input: string) => {path: Array<number>} | undefined,
+): Promise<Array<Withdrawal>> {
+  const result: Array<Withdrawal> = []
+
+  const withdrawalKeys = await withdrawals.keys()
+  for (let i = 0; i < (await withdrawalKeys.len()); i++) {
+    const rewardAddress = await withdrawalKeys.get(i)
+    const withdrawalAmount = await withdrawals.get(rewardAddress)
+    if (withdrawalAmount == null) {
+      throw new Error(`should never happen`)
+    }
+
+    const rewardAddressPayload = Buffer.from(await (await rewardAddress.toAddress()).toBytes()).toString('hex')
+    const addressing = addressingMap(rewardAddressPayload)
+    if (addressing == null) {
+      throw new Error(`Ledger can only withdraw from own address ${rewardAddressPayload}`)
+    }
+    result.push({
+      amount: await withdrawalAmount.toStr(),
+      stakeCredential: {
+        type: StakeCredentialParamsType.KEY_PATH,
+        keyPath: addressing.path,
+      },
+    })
+  }
+  return result
+}
+
+interface TransformToLedgerOutputsRequest {
+  networkId: number
+  txOutputs: TransactionOutputs
+  changeAddrs: Array<Address & Value & Addressing>
+  addressingMap: (input: string) => CardanoTypes.Addressing | undefined
+}
+
+async function _transformToLedgerOutputs(request: TransformToLedgerOutputsRequest): Array<TxOutput> {
+  const result: Array<TxOutput> = []
+
+  for (let i = 0; i < (await request.txOutputs.len()); i++) {
+    const output = await request.txOutputs.get(i)
+    const address = output.address()
+    const jsAddr = toHexOrBase58(output.address())
+
+    const changeAddr = request.changeAddrs.find((change) => jsAddr === change.address)
+    if (changeAddr != null) {
+      verifyFromBip44Root(changeAddr.addressing)
+      const addressParams = toLedgerAddressParameters({
+        networkId: request.networkId,
+        address,
+        path: changeAddr.addressing.path,
+        addressingMap: request.addressingMap,
+      })
+      result.push({
+        amount: output.amount().coin().to_str(),
+        tokenBundle: await toLedgerTokenBundle(await (await output.amount()).multiasset()),
+        destination: {
+          type: TxOutputDestinationType.DEVICE_OWNED,
+          params: addressParams,
+        },
+      })
+    } else {
+      result.push({
+        amount: (await (await (await output.amount()).coin()).toStr()) as any,
+        tokenBundle: await toLedgerTokenBundle(await (await output.amount()).multiasset()),
+        destination: {
+          type: TxOutputDestinationType.THIRD_PARTY,
+          params: {
+            addressHex: Buffer.from(address.to_bytes()).toString('hex'),
+          },
+        },
+      })
+    }
+  }
+  return result
+}
+
+async function toLedgerTokenBundle(assets: MultiAsset | null): Promise<Array<AssetGroup> | null> {
+  if (assets == null) return null
+  const assetGroup: Array<AssetGroup> = []
+
+  const policyHashes = await assets.keys()
+  for (let i = 0; i < (await policyHashes.len()); i++) {
+    const policyId = await policyHashes.get(i)
+    const assetsForPolicy = await assets.get(policyId)
+    if (assetsForPolicy == null) continue
+
+    const tokens: Array<Token> = []
+    const assetNames = await assetsForPolicy.keys()
+    for (let j = 0; j < (await assetNames.len()); j++) {
+      const assetName = await assetNames.get(j)
+      const amount = await assetsForPolicy.get(assetName)
+      if (amount == null) continue
+
+      tokens.push({
+        amount: await amount.toStr(),
+        assetNameHex: Buffer.from(await assetName.name()).toString('hex'),
+      })
+    }
+    // sort by asset name to the order specified by rfc7049
+    tokens.sort((token1, token2) => compareCborKey(token1.assetNameHex, token2.assetNameHex))
+    assetGroup.push({
+      policyIdHex: Buffer.from(await policyId.toBytes()).toString('hex'),
+      tokens,
+    })
+  }
+  // sort by policy id to the order specified by rfc7049
+  assetGroup.sort((asset1, asset2) => compareCborKey(asset1.policyIdHex, asset2.policyIdHex))
+  return assetGroup
+}

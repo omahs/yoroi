@@ -389,7 +389,7 @@ export const useSignWithPasswordAndSubmitTx = (
 export const useSignWithHwAndSubmitTx = (
   {wallet}: {wallet: YoroiWallet},
   options?: {
-    signTx?: UseMutationOptions<YoroiSignedTx, Error, {unsignedTx: YoroiUnsignedTx; useUSB: boolean}>
+    signTx?: UseMutationOptions<{txId: string; encodedTx: any}, Error, {unsignedTx: YoroiUnsignedTx; useUSB: boolean}>
     submitTx?: UseMutationOptions<TxSubmissionStatus, Error, YoroiSignedTx>
   },
 ) => {
@@ -492,7 +492,11 @@ export const useSignTxWithPassword = (
 
 export const useSignTxWithHW = (
   {wallet}: {wallet: YoroiWallet},
-  options: UseMutationOptions<YoroiSignedTx, Error, {unsignedTx: YoroiUnsignedTx; useUSB: boolean}> = {},
+  options: UseMutationOptions<
+    {txId: string; encodedTx: any},
+    Error,
+    {unsignedTx: YoroiUnsignedTx; useUSB: boolean}
+  > = {},
 ) => {
   const mutation = useMutation({
     mutationFn: async ({unsignedTx, useUSB}) => wallet.signTxWithLedger(unsignedTx, useUSB),
@@ -722,16 +726,16 @@ export const useIsOnline = (
 
 export const useSubmitTx = (
   {wallet}: {wallet: YoroiWallet},
-  options: UseMutationOptions<TxSubmissionStatus, Error, YoroiSignedTx> = {},
+  options: UseMutationOptions<TxSubmissionStatus, Error, {txId: string; encodedTx: Uint8Array} | YoroiSignedTx> = {},
 ) => {
   const mutation = useMutationWithInvalidations({
-    mutationFn: async (signedTx) => {
+    mutationFn: async (signedTx: any) => {
       const serverStatus = await wallet.checkServerStatus()
-      const base64 = Buffer.from(signedTx.signedTx.encodedTx).toString('base64')
+      const base64 = Buffer.from(signedTx.encodedTx || signedTx.signedTx.encodedTx).toString('base64')
       await wallet.submitTransaction(base64)
 
       if (serverStatus.isQueueOnline) {
-        return fetchTxStatus(wallet, signedTx.signedTx.id, false)
+        return fetchTxStatus(wallet, signedTx.txId || signedTx.signedTx.id, false)
       }
 
       return {
