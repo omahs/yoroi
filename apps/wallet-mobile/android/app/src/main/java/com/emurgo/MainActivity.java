@@ -6,7 +6,6 @@ import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
-import com.zoontek.rnbootsplash.RNBootSplash;
 import expo.modules.ReactActivityDelegateWrapper;
 import android.view.WindowManager;
 
@@ -22,11 +21,9 @@ public class MainActivity extends ReactActivity {
     return "yoroi";
   }
 
-  // react-native-boot-splash
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    RNBootSplash.init(this);
-    super.onCreate(savedInstanceState); // or super.onCreate(null) with react-native-screens
+    super.onCreate(null);
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
   }
 

@@ -3,7 +3,6 @@ import {createStackNavigator} from '@react-navigation/stack'
 import * as React from 'react'
 import {defineMessages, useIntl} from 'react-intl'
 import {Alert, AppState, AppStateStatus, Platform} from 'react-native'
-import RNBootSplash from 'react-native-bootsplash'
 
 import StorybookScreen from '../.storybook'
 import {OsLoginScreen, PinLoginScreen, useBackgroundTimeout} from './auth'
@@ -28,7 +27,7 @@ export const AppNavigator = () => {
   const {isLoggedIn, isLoggedOut, login} = useAuth()
   const {authWithOs} = useAuthWithOs({
     onSuccess: login,
-    onSettled: () => RNBootSplash.hide({fade: true}),
+    onSettled: undefined, // spash screen off
   })
 
   const authAction = useAuthAction()
@@ -39,7 +38,7 @@ export const AppNavigator = () => {
     if (authAction === 'auth-with-os') {
       authWithOs()
     } else {
-      RNBootSplash.hide({fade: true})
+     // spash screen off
     }
   }
 
@@ -170,7 +169,7 @@ const useHideScreenInAppSwitcher = () => {
       const isFocused = (appState: AppStateStatus) => appState === 'active'
       const isBlurred = (appState: AppStateStatus) => appState === 'inactive' || appState === 'background'
 
-      if (isBlurred(appStateRef.current) && isFocused(nextAppState)) RNBootSplash.hide({fade: true})
+      if (isBlurred(appStateRef.current) && isFocused(nextAppState)) // spash screen off
 
       appStateRef.current = nextAppState
     })
