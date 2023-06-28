@@ -28,7 +28,6 @@
 		A608B7143FA94C7CAA81F276 /* Rubik-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 454771C13D0F4F38BD2C9F99 /* Rubik-Italic.ttf */; };
 		BD60BE662A34B13000EFF020 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		BD60BE672A34B13000EFF020 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		BD60BE6C2A34B13000EFF020 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BD825DEA29FB507600E19149 /* BootSplash.storyboard */; };
 		BD60BE6D2A34B13000EFF020 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		BD60BE6E2A34B13000EFF020 /* Rubik-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4EA1326FAF2A4309BBC6E8CD /* Rubik-Black.ttf */; };
 		BD60BE6F2A34B13000EFF020 /* Rubik-BlackItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B4FF531EA86A409487D4A26C /* Rubik-BlackItalic.ttf */; };
@@ -47,7 +46,6 @@
 		BD60BE7C2A34B13000EFF020 /* Rubik-SemiBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 50BDC11B44F146E29B6B82C0 /* Rubik-SemiBoldItalic.ttf */; };
 		BD60BE7D2A34B13000EFF020 /* Rubik-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 30E6D4F14F9A452789628CDB /* Rubik-VariableFont_wght.ttf */; };
 		BD60BE7E2A34B13000EFF020 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 49514077C0DA44DB8D83777A /* OFL.txt */; };
-		BD825DEB29FB507600E19149 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BD825DEA29FB507600E19149 /* BootSplash.storyboard */; };
 		BDDB26B62A34E2C80090E17D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09964E02413B96DECAA1B752 /* ExpoModulesProvider.swift */; };
 		BDDB26B72A34E2DE0090E17D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A3D046779D24DE475BB552 /* ExpoModulesProvider.swift */; };
 		CFD34A0207E6636EEBFCDADC /* libPods-yoroi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 88DA2B423A59B13DBACA6F79 /* libPods-yoroi.a */; };
@@ -103,7 +101,6 @@
 		A230DBE7EEBA4B38AD9006D2 /* Rubik-Italic-VariableFont_wght.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-Italic-VariableFont_wght.ttf"; path = "../src/assets/fonts/Rubik-Italic-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		B4FF531EA86A409487D4A26C /* Rubik-BlackItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-BlackItalic.ttf"; path = "../src/assets/fonts/Rubik-BlackItalic.ttf"; sourceTree = "<group>"; };
 		BD60BE852A34B13000EFF020 /* nightly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = nightly.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		BD825DEA29FB507600E19149 /* BootSplash.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = BootSplash.storyboard; path = yoroi/BootSplash.storyboard; sourceTree = "<group>"; };
 		BDD74A382A34B82A003591A8 /* nightly.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = nightly.plist; sourceTree = "<group>"; };
 		D3921B43846F4C8CA253D195 /* Rubik-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-Light.ttf"; path = "../src/assets/fonts/Rubik-Light.ttf"; sourceTree = "<group>"; };
 		DB3A2C3F18EB451488B7075E /* Rubik-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-SemiBold.ttf"; path = "../src/assets/fonts/Rubik-SemiBold.ttf"; sourceTree = "<group>"; };
@@ -166,7 +163,6 @@
 				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
-				BD825DEA29FB507600E19149 /* BootSplash.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
 			);
 			name = yoroi;
@@ -405,7 +401,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BD825DEB29FB507600E19149 /* BootSplash.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				51FDC63F286F4A698ED04B20 /* Rubik-Black.ttf in Resources */,
 				018832E913FC47AEBA8A941C /* Rubik-BlackItalic.ttf in Resources */,
@@ -431,7 +426,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BD60BE6C2A34B13000EFF020 /* BootSplash.storyboard in Resources */,
 				BD60BE6D2A34B13000EFF020 /* Images.xcassets in Resources */,
 				BD60BE6E2A34B13000EFF020 /* Rubik-Black.ttf in Resources */,
 				BD60BE6F2A34B13000EFF020 /* Rubik-BlackItalic.ttf in Resources */,

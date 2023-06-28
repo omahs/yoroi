@@ -1,19 +1,9 @@
 import React, {useEffect} from 'react'
-import {Platform, UIManager} from 'react-native'
-import {enableScreens} from 'react-native-screens'
 import uuid from 'uuid'
 
 import {AppNavigator} from './AppNavigator'
 import {useStorage, YoroiStorage} from './yoroi-wallets/storage'
 import {walletManager} from './yoroi-wallets/walletManager'
-
-enableScreens()
-
-if (Platform.OS === 'android') {
-  if (UIManager.setLayoutAnimationEnabledExperimental != null) {
-    UIManager.setLayoutAnimationEnabledExperimental(true)
-  }
-}
 
 export const InitApp = () => {
   const loaded = useInitApp()

@@ -30,6 +30,9 @@ PODS:
     - React-Core
     - React-RCTAppDelegate
     - ReactCommon/turbomodule/core
+  - EXSplashScreen (0.18.2):
+    - ExpoModulesCore
+    - React-Core
   - FBLazyVector (0.71.6)
   - FBReactNativeSpec (0.71.6):
     - RCT-Folly (= 2021.07.22.00)
@@ -105,6 +108,10 @@ PODS:
     - hermes-engine/Pre-built (= 0.71.6)
   - hermes-engine/Pre-built (0.71.6)
   - libevent (2.1.12)
+  - lottie-ios (3.4.4)
+  - lottie-react-native (5.1.4):
+    - lottie-ios (~> 3.4.0)
+    - React-Core
   - MultiplatformBleAdapter (0.1.9)
   - OpenSSL-Universal (1.1.1100)
   - Permission-BluetoothPeripheral (3.8.0):
@@ -557,6 +564,7 @@ DEPENDENCIES:
   - Expo (from `../../../node_modules/expo`)
   - ExpoKeepAwake (from `../../../node_modules/expo-keep-awake/ios`)
   - ExpoModulesCore (from `../../../node_modules/expo-modules-core`)
+  - EXSplashScreen (from `../../../node_modules/expo-splash-screen/ios`)
   - FBLazyVector (from `../../../node_modules/react-native/Libraries/FBLazyVector`)
   - FBReactNativeSpec (from `../../../node_modules/react-native/React/FBReactNativeSpec`)
   - Flipper (= 0.125.0)
@@ -583,6 +591,7 @@ DEPENDENCIES:
   - glog (from `../../../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - libevent (~> 2.1.12)
+  - lottie-react-native (from `../../../node_modules/lottie-react-native`)
   - OpenSSL-Universal (= 1.1.1100)
   - Permission-BluetoothPeripheral (from `../../../node_modules/react-native-permissions/ios/BluetoothPeripheral`)
   - Permission-Camera (from `../../../node_modules/react-native-permissions/ios/Camera`)
@@ -658,6 +667,7 @@ SPEC REPOS:
     - FlipperKit
     - fmt
     - libevent
+    - lottie-ios
     - MultiplatformBleAdapter
     - OpenSSL-Universal
     - SocketRocket
@@ -691,6 +701,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/expo-keep-awake/ios"
   ExpoModulesCore:
     :path: "../../../node_modules/expo-modules-core"
+  EXSplashScreen:
+    :path: "../../../node_modules/expo-splash-screen/ios"
   FBLazyVector:
     :path: "../../../node_modules/react-native/Libraries/FBLazyVector"
   FBReactNativeSpec:
@@ -699,6 +711,8 @@ EXTERNAL SOURCES:
     :podspec: "../../../node_modules/react-native/third-party-podspecs/glog.podspec"
   hermes-engine:
     :podspec: "../../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
+  lottie-react-native:
+    :path: "../../../node_modules/lottie-react-native"
   Permission-BluetoothPeripheral:
     :path: "../../../node_modules/react-native-permissions/ios/BluetoothPeripheral"
   Permission-Camera:
@@ -829,6 +843,7 @@ SPEC CHECKSUMS:
   Expo: 8448e3a2aa1b295f029c81551e1ab6d986517fdb
   ExpoKeepAwake: 69f5f627670d62318410392d03e0b5db0f85759a
   ExpoModulesCore: 653958063a301098b541ae4dfed1ac0b98db607b
+  EXSplashScreen: 0e0a9ba0cf7553094e93213099bd7b42e6e237e9
   FBLazyVector: a83ceaa8a8581003a623facdb3c44f6d4f342ac5
   FBReactNativeSpec: d850372b600f78cbb92585bfc7b2e48dbb73b3ad
   Flipper: 26fc4b7382499f1281eb8cb921e5c3ad6de91fe0
@@ -844,6 +859,8 @@ SPEC CHECKSUMS:
   glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
   hermes-engine: b434cea529ad0152c56c7cb6486b0c4c0b23b5de
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
+  lottie-ios: 8f97d3271e155c2d688875c29cd3c74908aef5f8
+  lottie-react-native: b702fab740cdb952a8e2354713d3beda63ff97b0
   MultiplatformBleAdapter: 5a6a897b006764392f9cef785e4360f54fb9477d
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
   Permission-BluetoothPeripheral: 2d2d32c4651752655c19345abbb45ad15651f987
@@ -909,4 +926,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 4045625f1556b4d232075df8dbd22524a7010c3f
 
-COCOAPODS: 1.11.3
+COCOAPODS: 1.12.1
