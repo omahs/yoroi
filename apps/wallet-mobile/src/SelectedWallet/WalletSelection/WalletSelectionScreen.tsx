@@ -1,7 +1,8 @@
+import BottomSheet from '@gorhom/bottom-sheet'
 import {useNavigation} from '@react-navigation/native'
 import React from 'react'
 import {defineMessages, useIntl} from 'react-intl'
-import {FlatList, InteractionManager, Linking, RefreshControl, StyleSheet, Text, TouchableOpacity} from 'react-native'
+import {FlatList, InteractionManager, Linking, RefreshControl, StyleSheet, Text, TouchableOpacity, View} from 'react-native'
 import {SafeAreaView} from 'react-native-safe-area-context'
 
 import {Button} from '../../components/Button'
@@ -33,6 +34,17 @@ export const WalletSelectionScreen = () => {
   const selectWalletMeta = useSetSelectedWalletMeta()
   const selectWallet = useSetSelectedWallet()
   const intl = useIntl()
+
+  // ref
+  const bottomSheetRef = React.useRef<BottomSheet>(null)
+
+  // variables
+  const snapPoints = React.useMemo(() => ['25%', '50%'], [])
+
+  // callbacks
+  const handleSheetChanges = React.useCallback((index: number) => {
+    console.log('handleSheetChanges', index)
+  }, [])
 
   const {openWallet, isLoading} = useOpenWallet({
     onSuccess: ([wallet, walletMeta]) => {
@@ -90,6 +102,12 @@ export const WalletSelectionScreen = () => {
       <OnlyNightlyShelleyTestnetButton />
 
       <OnlyDevButton />
+
+      <BottomSheet ref={bottomSheetRef} index={1} snapPoints={snapPoints} onChange={handleSheetChanges}>
+        <View style={styles.contentContainer}>
+          <Text>Awesome 🎉</Text>
+        </View>
+      </BottomSheet>
 
       <PleaseWaitModal title={strings.loadingWallet} spinnerText={strings.pleaseWait} visible={isLoading} />
     </SafeAreaView>
@@ -231,6 +249,10 @@ const styles = StyleSheet.create({
   link: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contentContainer: {
+    flex: 1,
     alignItems: 'center',
   },
 })

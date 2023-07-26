@@ -12,15 +12,15 @@ module.exports = (api) => {
     ],
     '@babel/plugin-proposal-export-namespace-from',
     [
-      'react-native-reanimated/plugin',
-      {
-        relativeSourceLocation: true,
-      },
-    ],
-    [
       'babel-plugin-inline-import',
       {
         extensions: ['.md'],
+      },
+    ],
+    [
+      'react-native-reanimated/plugin',
+      {
+        relativeSourceLocation: true,
       },
     ],
   ]

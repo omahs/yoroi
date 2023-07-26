@@ -1,6 +1,7 @@
 import React from 'react'
 import {LogBox, Platform, StyleSheet, UIManager} from 'react-native'
 import Config from 'react-native-config'
+import {GestureHandlerRootView} from 'react-native-gesture-handler'
 import * as RNP from 'react-native-paper'
 import {SafeAreaProvider} from 'react-native-safe-area-context'
 import {enableScreens} from 'react-native-screens'
@@ -46,34 +47,36 @@ export const YoroiApp = () => {
 
   // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   return migrated ? (
-    <StorageProvider>
-      <MetricsProvider metricsManager={metricsManager}>
-        <WalletManagerProvider walletManager={walletManager}>
-          <ErrorBoundary>
-            <QueryClientProvider client={queryClient}>
-              <LoadingBoundary style={StyleSheet.absoluteFill}>
-                <ThemeProvider>
-                  <LanguageProvider>
-                    <CurrencyProvider>
-                      <SafeAreaProvider>
-                        <RNP.Provider>
-                          <AuthProvider>
-                            <SelectedWalletMetaProvider>
-                              <SelectedWalletProvider>
-                                <InitApp />
-                              </SelectedWalletProvider>
-                            </SelectedWalletMetaProvider>
-                          </AuthProvider>
-                        </RNP.Provider>
-                      </SafeAreaProvider>
-                    </CurrencyProvider>
-                  </LanguageProvider>
-                </ThemeProvider>
-              </LoadingBoundary>
-            </QueryClientProvider>
-          </ErrorBoundary>
-        </WalletManagerProvider>
-      </MetricsProvider>
-    </StorageProvider>
+    <GestureHandlerRootView style={{flex: 1}}>
+      <StorageProvider>
+        <MetricsProvider metricsManager={metricsManager}>
+          <WalletManagerProvider walletManager={walletManager}>
+            <ErrorBoundary>
+              <QueryClientProvider client={queryClient}>
+                <LoadingBoundary style={StyleSheet.absoluteFill}>
+                  <ThemeProvider>
+                    <LanguageProvider>
+                      <CurrencyProvider>
+                        <SafeAreaProvider>
+                          <RNP.Provider>
+                            <AuthProvider>
+                              <SelectedWalletMetaProvider>
+                                <SelectedWalletProvider>
+                                  <InitApp />
+                                </SelectedWalletProvider>
+                              </SelectedWalletMetaProvider>
+                            </AuthProvider>
+                          </RNP.Provider>
+                        </SafeAreaProvider>
+                      </CurrencyProvider>
+                    </LanguageProvider>
+                  </ThemeProvider>
+                </LoadingBoundary>
+              </QueryClientProvider>
+            </ErrorBoundary>
+          </WalletManagerProvider>
+        </MetricsProvider>
+      </StorageProvider>
+    </GestureHandlerRootView>
   ) : null
 }
