@@ -15,6 +15,9 @@ import {AppRoutes} from './navigation'
 import {WalletInitNavigator} from './WalletInit/WalletInitNavigator'
 import {WalletNavigator} from './WalletNavigator'
 import {AuthSetting, useAuthOsEnabled, useAuthSetting, useAuthWithOs} from './yoroi-wallets/auth'
+import DeviceInfo from 'react-native-device-info'
+import {FINGERPRINT_OVERLAY_MIN_SDK} from './auth/constants'
+import {supportsAndroidFingerprintOverlay} from './auth/biometrics'
 
 const Stack = createStackNavigator<AppRoutes>()
 const navRef = React.createRef<NavigationContainerRef<ReactNavigation.RootParamList>>()
@@ -38,12 +41,19 @@ export const AppNavigator = () => {
 
     // try first OS auth before navigating to os login screen
     if (authAction === 'auth-with-os') {
+      if (Platform.OS === 'android') {
+        supportsAndroidFingerprintOverlay().then((isOverlaySupported) => {
+          if (!isOverlaySupported) {
+            RNBootSplash.hide({fade: true})
+          }
+          InteractionManager.runAfterInteractions(() => {
+            authWithOs()
+          })
+        })
+        return
+      }
 
-      RNBootSplash.hide({fade: true})
-      InteractionManager.runAfterInteractions(() => {
-        authWithOs()
-      });
-
+      authWithOs()
     } else {
       RNBootSplash.hide({fade: true})
     }
