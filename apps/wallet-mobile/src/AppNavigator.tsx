@@ -2,7 +2,7 @@ import {NavigationContainer, NavigationContainerRef} from '@react-navigation/nat
 import {createStackNavigator} from '@react-navigation/stack'
 import * as React from 'react'
 import {defineMessages, useIntl} from 'react-intl'
-import {Alert, AppState, AppStateStatus, Platform} from 'react-native'
+import {Alert, AppState, AppStateStatus, InteractionManager, Platform} from 'react-native'
 import RNBootSplash from 'react-native-bootsplash'
 
 import StorybookScreen from '../.storybook'
@@ -33,11 +33,17 @@ export const AppNavigator = () => {
 
   const authAction = useAuthAction()
   const onReady = () => {
+    console.log('AppNavigator.onReady', {isLoggedIn, isLoggedOut, authAction})
     if (isLoggedIn) return
 
     // try first OS auth before navigating to os login screen
     if (authAction === 'auth-with-os') {
-      authWithOs()
+
+      RNBootSplash.hide({fade: true})
+      InteractionManager.runAfterInteractions(() => {
+        authWithOs()
+      });
+
     } else {
       RNBootSplash.hide({fade: true})
     }

@@ -13,6 +13,10 @@ import com.facebook.react.defaults.DefaultReactNativeHost;
 import com.facebook.soloader.SoLoader;
 import java.util.List;
 
+import com.oblador.keychain.KeychainPackage;
+import com.oblador.keychain.KeychainModuleBuilder;
+
+
 public class MainApplication extends Application implements ReactApplication {
 
   private final ReactNativeHost mReactNativeHost =
@@ -30,6 +34,9 @@ public class MainApplication extends Application implements ReactApplication {
           // packages.add(new MyReactNativePackage());
 
           packages.add(new FlagSecurePackage());
+//           packages.add(new KeychainPackage(new KeychainModuleBuilder().withoutWarmUp()));
+          packages.add(new ColdKeychainPackage());
+
           return packages;
         }
 

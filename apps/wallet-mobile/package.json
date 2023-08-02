@@ -140,7 +140,7 @@
     "react-native-device-info": "6.0.1",
     "react-native-easy-view-transformer": "^1.2.0",
     "react-native-gesture-handler": "^2.9.0",
-    "react-native-keychain": "7.0.0",
+    "react-native-keychain": "8.1.2",
     "react-native-linear-gradient": "2.5.6",
     "react-native-markdown-display": "^7.0.0-alpha.2",
     "react-native-pager-view": "^6.2.0",

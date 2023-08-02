@@ -1,7 +1,9 @@
 import {Platform} from 'react-native'
 import * as Keychain from 'react-native-keychain'
+import {STORAGE_TYPE} from 'react-native-keychain'
 
 async function write(key: string, value: string) {
+  console.log('write', key, value)
   return Keychain.setGenericPassword(key, value, {
     service: key,
     accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
@@ -9,18 +11,24 @@ async function write(key: string, value: string) {
     securityLevel: Keychain.SECURITY_LEVEL.SECURE_HARDWARE,
   }).then((result) => {
     if (result === false) return Promise.reject(new Error('Unable to store secret'))
+  }).catch(e => {
+    console.error(e)
+    throw e;
   })
 }
 
 async function read(key: string, authenticationPrompt: Keychain.Options['authenticationPrompt']) {
+  console.log('read', key)
   let credentials: false | Keychain.UserCredentials
   try {
     credentials = await Keychain.getGenericPassword({
       service: key,
       authenticationPrompt,
-      accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET_OR_DEVICE_PASSCODE,
+      accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
     })
+    console.log('read complete')
   } catch (error) {
+    console.error(error)
     throw errorDecoder(error)
   }
 
